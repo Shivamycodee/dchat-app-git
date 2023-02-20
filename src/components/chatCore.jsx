@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Badge from "react-bootstrap/Badge";
 
@@ -12,6 +13,7 @@ import { floodsub } from "@libp2p/floodsub";
 import { bootstrap } from "@libp2p/bootstrap";
 
 import PeerId from "peer-id";
+import {peerIdFromString} from '@libp2p/peer-id'
 
 
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
@@ -76,9 +78,9 @@ export default function chatCore() {
 
           // dial them when we discover them
 
-          // node.dial(evt.detail.id).catch((err) => {
-          //   console.log(`Could not dial ${evt.detail.id}`, err);
-          // });
+          node.dial(evt.detail.id).catch((err) => {
+            console.log(`Could not dial ${evt.detail.id}`, err);
+          });
         });
 
         // Listen for new connections to peers
@@ -99,26 +101,38 @@ export default function chatCore() {
 
   const connect = async()=>{
 
-     alert(peers);
+     alert(
+       "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
+         peers
+     );
     //  const addr = PeerId.createFromB58String(peers);
     //  console.warn(addr);
-    const addr = new Multiaddr(peers);
+    const addr = new Multiaddr(
+      "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
+        peers
+    );
+    console.warn(addr);
+    try{
 
-     const connection = await nodE.dial(addr);
-     console.warn("connecting to node : ", connection);
-     const stream = connection.newStream();
-     stream.write("Hello, world!");
-     stream.end();
+      const connection = await nodE.dial(addr);
+      console.warn("connecting to node : ", connection);
+
+    }catch(e){console.warn("connecting to peer err: ",e)}
+
+
+    //  const stream = connection.newStream();
+    //  stream.write("Hello, world!");
+    //  stream.end();
 
 
   }
 
   const find = async () => {
-    //connect to peer
-    const anId = peerIdFromString(peers);
-    const hasData = Boolean(nodE.peerStore.get(anId));
 
-    alert(`has found peer: ${hasData}`);
+      const anId = peerIdFromString(peers);
+    const res =  await nodE.peerStore.get(anId).catch(()=>alert("false"))
+    alert(Boolean(res))
+     
   };
 
 
@@ -153,7 +167,7 @@ export default function chatCore() {
             aria-describedby="button-addon2"
             onChange={(e) =>
               setPeers(
-                "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
+                // "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
                   e.target.value
               )
             }
