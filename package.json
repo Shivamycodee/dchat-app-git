@@ -1,0 +1,48 @@
+{
+  "name": "allme",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@chainsafe/libp2p-noise": "^11.0.0",
+    "@libp2p/bootstrap": "^6.0.0",
+    "@libp2p/floodsub": "^6.0.0",
+    "@libp2p/kad-dht": "^7.0.0",
+    "@libp2p/mplex": "^7.1.1",
+    "@libp2p/peer-id": "^2.0.1",
+    "@libp2p/tcp": "^6.1.2",
+    "@libp2p/webrtc-star": "^6.0.0",
+    "@libp2p/websockets": "^5.0.3",
+    "@next/font": "13.1.6",
+    "@reduxjs/toolkit": "^1.9.2",
+    "axios": "^1.3.2",
+    "bootstrap": "^5.2.3",
+    "eslint": "8.34.0",
+    "eslint-config-next": "13.1.6",
+    "jquery": "^3.6.3",
+    "multiaddr": "^10.0.1",
+    "net": "^1.0.2",
+    "next": "13.1.6",
+    "popper.js": "^1.16.1",
+    "react": "^18.1.0",
+    "react-bootstrap": "^2.7.1",
+    "react-dom": "^18.1.0",
+    "react-redux": "^8.0.1",
+    "react-router-dom": "^6.8.1",
+    "redux": "^4.2.1",
+    "uint8arrays": "^4.0.3"
+  },
+  "devDependencies": {
+    "@types/bootstrap": "^5.2.6",
+    "@types/node": "^18.13.0",
+    "libp2p": "^0.42.2",
+    "libp2p-mplex": "^0.10.7",
+    "libp2p-webrtc-star": "^0.25.0",
+    "libp2p-websockets": "^0.16.2"
+  }
+}
