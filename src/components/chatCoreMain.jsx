@@ -192,21 +192,15 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
     //  };
 
     const connect = async()=>{
-
-      const peerMultiaddr = {
-        family: "ipv4",
-        address: "/dns4/wrtc-star1.par.dwebops.pub",
-        port: 443,
-        transport: "tcp",
-        peerId: peers,
-      };
       
       alert(nodB)
       const connection = await nodE.dial(nodB);
+      console.warn("done connect")
      console.warn("connecting to node : ",connection)
-  const stream = connection.newStream()
-  stream.write('Hello, world!')
-  stream.end()
+  // const stream = connection.newStream()
+  // stream.write('Hello, world!')
+  // stream.end()
+  console.warn("it end")
 
     }
 
@@ -246,7 +240,6 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
                   `/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/` +
                     e.target.value
                 )
-                // setPeers(e.target.value)
               }
             />
             <div className="input-group-append">
@@ -267,7 +260,6 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
               className="form-control"
               placeholder="Chats..."
               aria-label="Chats"
-              value={msg}
             ></textarea>
           </div>
 
@@ -301,9 +293,6 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
             </button>
           </div>
 
-          {/* <input id="usrVal" onChange={(e) => setPeers(e.target.value)} /> */}
-          {/* <button onClick={() => send("fuck u")}>send</button> */}
-          {/* <button onClick={() => find(peers)}>find</button> */}
         </div>
       </>
     );

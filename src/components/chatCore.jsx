@@ -10,7 +10,9 @@ import { webSockets } from "@libp2p/websockets";
 import { kadDHT } from "@libp2p/kad-dht";
 import { floodsub } from "@libp2p/floodsub";
 import { bootstrap } from "@libp2p/bootstrap";
-import { peerIdFromString, PeerId } from "@libp2p/peer-id";
+
+import PeerId from "peer-id";
+
 
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
@@ -67,15 +69,16 @@ export default function chatCore() {
 
         // Listen for new peers
         node.addEventListener("peer:discovery", (evt) => {
-          const peer = evt.detail;
-          console.log(`Found peer ${peer.id.toString()}`);
+          const peer = evt.detail.id.toString();
+          console.log("peer discovered:",peer);
+        
 
 
           // dial them when we discover them
-          console.warn("evt.detail.id : ", evt.detail.id);
-          node.dial(evt.detail.id).catch((err) => {
-            console.log(`Could not dial ${evt.detail.id}`, err);
-          });
+
+          // node.dial(evt.detail.id).catch((err) => {
+          //   console.log(`Could not dial ${evt.detail.id}`, err);
+          // });
         });
 
         // Listen for new connections to peers
@@ -97,7 +100,11 @@ export default function chatCore() {
   const connect = async()=>{
 
      alert(peers);
-     const connection = await nodE.dial(peers);
+    //  const addr = PeerId.createFromB58String(peers);
+    //  console.warn(addr);
+    const addr = new Multiaddr(peers);
+
+     const connection = await nodE.dial(addr);
      console.warn("connecting to node : ", connection);
      const stream = connection.newStream();
      stream.write("Hello, world!");
@@ -105,6 +112,25 @@ export default function chatCore() {
 
 
   }
+
+  const find = async () => {
+    //connect to peer
+    const anId = peerIdFromString(peers);
+    const hasData = Boolean(nodE.peerStore.get(anId));
+
+    alert(`has found peer: ${hasData}`);
+  };
+
+
+  const Master = ()=>{
+    alert("start")
+    const val = PeerId.createFromB58String(
+      "QmXY2AwvEksGXh3fTCSyc1vdYXuUxfQq9HLPJ1tALpHjme"
+    );
+    alert("done")
+    console.warn(val);
+  }
+
 
 
   return (
@@ -125,15 +151,22 @@ export default function chatCore() {
             placeholder="Friend Id"
             aria-label="Friend Id"
             aria-describedby="button-addon2"
-            onChange={
-              (e) =>
-                setPeers(
-                  `/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/` +
-                    e.target.value
-                )
+            onChange={(e) =>
+              setPeers(
+                "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
+                  e.target.value
+              )
             }
           />
           <div className="input-group-append">
+            <button
+              className="btn btn-outline-secondary"
+              type="button"
+              id="button-addon2"
+              onClick={() => find()}
+            >
+              find
+            </button>
             <button
               className="btn btn-outline-secondary"
               type="button"
@@ -150,7 +183,6 @@ export default function chatCore() {
             className="form-control"
             placeholder="Chats..."
             aria-label="Chats"
-            value="{msg}"
           ></textarea>
         </div>
 
@@ -183,7 +215,6 @@ export default function chatCore() {
             listen
           </button>
         </div>
-
       </div>
     </>
   );
