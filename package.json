@@ -25,6 +25,7 @@
     "eslint": "8.34.0",
     "eslint-config-next": "13.1.6",
     "jquery": "^3.6.3",
+    "libp2p-transport": "^0.2.1",
     "multiaddr": "^10.0.1",
     "net": "^1.0.2",
     "next": "13.1.6",

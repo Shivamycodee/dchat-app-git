@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Badge from "react-bootstrap/Badge";
 
-import libp2p, { createLibp2p } from "libp2p";
+import  { createLibp2p } from "libp2p";
 import { webRTCStar } from "@libp2p/webrtc-star";
 import { noise } from "@chainsafe/libp2p-noise";
 import { mplex } from "@libp2p/mplex";
@@ -25,7 +25,7 @@ export default function chatCore() {
     const [nodE,setNodE] = useState();
     const [peers,setPeers] = useState();
     const [peerId,setPeerId] = useState();
-
+    const [msg,setMsg] = useState();
 
   const start = async()=>{
   
@@ -33,6 +33,7 @@ export default function chatCore() {
         const wrtcStar = webRTCStar();
         const node = await createLibp2p({
           addresses: {
+
             // Add the signaling server address, along with our PeerId to our multiaddrs list
             // libp2p will automatically attempt to dial to the signaling server so that it can
             // receive inbound connections from other peers
@@ -60,6 +61,8 @@ export default function chatCore() {
           // we add the Pubsub module we want
           pubsub: floodsub(),
         });
+
+        console.warn("node : ",node)
 
         node.start();
         setNodE(node);
@@ -100,31 +103,31 @@ export default function chatCore() {
 
 
   const connect = async()=>{
+    
+    try{
 
-     alert(
-       "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
-         peers
-     );
-    //  const addr = PeerId.createFromB58String(peers);
-    //  console.warn(addr);
+
+     alert("/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/"+peers);
+
     const addr = new Multiaddr(
       "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
         peers
     );
-    console.warn(addr);
-    try{
-
+  
       const connection = await nodE.dial(addr);
       console.warn("connecting to node : ", connection);
 
+     
+     
+
     }catch(e){console.warn("connecting to peer err: ",e)}
 
-
-    //  const stream = connection.newStream();
-    //  stream.write("Hello, world!");
-    //  stream.end();
+  }
 
 
+  const readMsg = async()=>{
+
+ 
   }
 
   const find = async () => {
@@ -166,10 +169,7 @@ export default function chatCore() {
             aria-label="Friend Id"
             aria-describedby="button-addon2"
             onChange={(e) =>
-              setPeers(
-                // "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
-                  e.target.value
-              )
+              setPeers(e.target.value)
             }
           />
           <div className="input-group-append">
@@ -197,6 +197,7 @@ export default function chatCore() {
             className="form-control"
             placeholder="Chats..."
             aria-label="Chats"
+            value={msg}
           ></textarea>
         </div>
 
@@ -213,7 +214,6 @@ export default function chatCore() {
               className="btn btn-outline-secondary"
               type="button"
               id="button-addon2"
-              onClick={() => send("it's working on friday")}
             >
               send
             </button>
@@ -223,7 +223,7 @@ export default function chatCore() {
           </button>
           <button
             className="btn btn-secondary"
-            onClick={() => listenMessage()}
+            onClick={() => readMsg()}
             // onClick={() => listenStream()}
           >
             listen
