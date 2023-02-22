@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState,useRef} from "react";
 import Badge from "react-bootstrap/Badge";
 
 import  { createLibp2p } from "libp2p";
@@ -19,14 +19,18 @@ import {peerIdFromString} from '@libp2p/peer-id'
 
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+import { send } from "process";
 
 
 export default function chatCore() {
+
+  const inputRef = useRef(null);
 
     const [nodE,setNodE] = useState();
     const [peers,setPeers] = useState();
     const [peerId,setPeerId] = useState();
     const [msg,setMsg] = useState();
+    const [sendVal,setSendVal] = useState();
 
   const start = async()=>{
   
@@ -68,7 +72,7 @@ export default function chatCore() {
 
         const addr = node.getMultiaddrs();
         setPeerId(addr.toString().slice(65, -1));
-        alert("start : ",addr);
+        alert(addr);
 
 
         // Listen for new peers
@@ -103,6 +107,7 @@ export default function chatCore() {
              "message received : ",
              new TextDecoder().decode(evt.detail.data)
            );
+           setMsg(new TextDecoder().decode(evt.detail.data));
          });
 
         node.pubsub.subscribe("fruit");
@@ -143,20 +148,14 @@ const stream = await connection.newStream(["/floodsub/1.0.0"]); // protocol can 
      
   };
 
-  const publishTopic = async()=>{
+  const publishTopic = async(val)=>{
 
-       nodE.pubsub.publish("fruit", new TextEncoder().encode("banana"));
-
-  }
-
-  const listen = async()=>{
-
-    // nodE.pubsub.subscribe("fruit", (evt) => {
-    //   console.warn("message received : ", new TextDecoder().decode(evt.detail.data));
-    // });
+       nodE.pubsub.publish("fruit", new TextEncoder().encode(val));
+         inputRef.current.value = "";
 
   }
 
+  
   return (
     <>
       <div className="peerHolder">
@@ -203,23 +202,27 @@ const stream = await connection.newStream(["/floodsub/1.0.0"]); // protocol can 
             placeholder="Chats..."
             aria-label="Chats"
             value={msg}
-          ></textarea>
+            readOnly
+          />
         </div>
 
         <div className="input-group mb-3">
           <input
             type="text"
+            id="chatInput"
             className="form-control"
             placeholder="message..."
             aria-label="message..."
             aria-describedby="button-addon2"
+            ref={inputRef}
+            onChange={(e) => setSendVal(e.target.value)}
           />
           <div className="input-group-append">
             <button
               className="btn btn-outline-secondary"
               type="button"
               id="button-addon2"
-              onClick={() => publishTopic()}
+              onClick={() => publishTopic(sendVal)}
             >
               publish
             </button>
