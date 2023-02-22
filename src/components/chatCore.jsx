@@ -9,8 +9,9 @@ import { mplex } from "@libp2p/mplex";
 import { Multiaddr } from "multiaddr";
 import { webSockets } from "@libp2p/websockets";
 import { kadDHT } from "@libp2p/kad-dht";
-import { floodsub } from "@libp2p/floodsub";
 import { bootstrap } from "@libp2p/bootstrap";
+
+import { floodsub } from "@libp2p/floodsub";
 
 import PeerId from "peer-id";
 import {peerIdFromString} from '@libp2p/peer-id'
@@ -30,10 +31,10 @@ export default function chatCore() {
   const start = async()=>{
   
       try{
+
         const wrtcStar = webRTCStar();
         const node = await createLibp2p({
           addresses: {
-
             // Add the signaling server address, along with our PeerId to our multiaddrs list
             // libp2p will automatically attempt to dial to the signaling server so that it can
             // receive inbound connections from other peers
@@ -58,18 +59,16 @@ export default function chatCore() {
             }),
           ],
           dht: kadDHT(),
-          // we add the Pubsub module we want
           pubsub: floodsub(),
         });
 
-        console.warn("node : ",node)
 
         node.start();
         setNodE(node);
 
         const addr = node.getMultiaddrs();
         setPeerId(addr.toString().slice(65, -1));
-        alert(addr);
+        alert("start : ",addr);
 
 
         // Listen for new peers
@@ -96,59 +95,67 @@ export default function chatCore() {
         node.connectionManager.addEventListener("peer:disconnect", (evt) => {
           const connection = evt.detail;
           console.log(`Disconnected from ${connection.remotePeer.toString()}`);
+
         });
+
+         node.pubsub.addEventListener("message", (evt) => {
+           console.warn(
+             "message received : ",
+             new TextDecoder().decode(evt.detail.data)
+           );
+         });
+
+        node.pubsub.subscribe("fruit");
+
+
       }catch(e){console.log("error in try : ",e)}
 
   }
 
-
   const connect = async()=>{
     
     try{
-
-
-     alert("/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/"+peers);
-
-    const addr = new Multiaddr(
-      "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
-        peers
-    );
-  
+      alert(
+        "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
+          peers
+      );
+      const addr = new Multiaddr(
+        "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
+          peers
+      );
       const connection = await nodE.dial(addr);
       console.warn("connecting to node : ", connection);
+      console.warn("connection status : ", connection.stat.status);
 
-     
-     
+const stream = await connection.newStream(["/floodsub/1.0.0"]); // protocol can be found in prototyes/streams/0/stat
+      
+      console.warn("stream : ", stream);
 
     }catch(e){console.warn("connecting to peer err: ",e)}
 
   }
 
-
-  const readMsg = async()=>{
-
- 
-  }
-
   const find = async () => {
 
-      const anId = peerIdFromString(peers);
+    const anId = peerIdFromString(peers);
     const res =  await nodE.peerStore.get(anId).catch(()=>alert("false"))
     alert(Boolean(res))
      
   };
 
+  const publishTopic = async()=>{
 
-  const Master = ()=>{
-    alert("start")
-    const val = PeerId.createFromB58String(
-      "QmXY2AwvEksGXh3fTCSyc1vdYXuUxfQq9HLPJ1tALpHjme"
-    );
-    alert("done")
-    console.warn(val);
+       nodE.pubsub.publish("fruit", new TextEncoder().encode("banana"));
+
   }
 
+  const listen = async()=>{
 
+    // nodE.pubsub.subscribe("fruit", (evt) => {
+    //   console.warn("message received : ", new TextDecoder().decode(evt.detail.data));
+    // });
+
+  }
 
   return (
     <>
@@ -168,9 +175,7 @@ export default function chatCore() {
             placeholder="Friend Id"
             aria-label="Friend Id"
             aria-describedby="button-addon2"
-            onChange={(e) =>
-              setPeers(e.target.value)
-            }
+            onChange={(e) => setPeers(e.target.value)}
           />
           <div className="input-group-append">
             <button
@@ -214,18 +219,15 @@ export default function chatCore() {
               className="btn btn-outline-secondary"
               type="button"
               id="button-addon2"
+              onClick={() => publishTopic()}
             >
-              send
+              publish
             </button>
           </div>
           <button className="btn btn-secondary" onClick={() => start()}>
             start
           </button>
-          <button
-            className="btn btn-secondary"
-            onClick={() => readMsg()}
-            // onClick={() => listenStream()}
-          >
+          <button className="btn btn-secondary" onClick={() => listen()}>
             listen
           </button>
         </div>
