@@ -6,7 +6,7 @@ import ImageSetLoader from '@/components/imageSetLoader'
 
 
 
-function imagePage({data}) {
+function ImagePage({data}) {
 
    console.log("server data : ",data)
 
@@ -73,4 +73,4 @@ function imagePage({data}) {
 //   };
 // }
 
-export default imagePage
+export default ImagePage

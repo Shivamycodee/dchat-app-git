@@ -1,7 +1,7 @@
 import React from 'react'
 import ChatCore from '@/components/chatCore'
 
-function chatIndex() {
+function ChatIndex() {
   return (
     <div>
     <ChatCore/>
@@ -9,4 +9,4 @@ function chatIndex() {
   )
 }
 
-export default chatIndex
+export default ChatIndex

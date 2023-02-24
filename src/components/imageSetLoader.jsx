@@ -1,7 +1,7 @@
 import ImageFetch,{dogs,anime} from '../pages/api/imagesFetch'
 import React, { useEffect, useState } from "react";
 
-function imageSetLoader({ category }) {
+function ImageSetLoader({ category }) {
   const [url, setUrl] = useState([]);
 
   useEffect(() => {
@@ -50,4 +50,4 @@ function imageSetLoader({ category }) {
 }
 
 
-export default imageSetLoader
+export default ImageSetLoader
