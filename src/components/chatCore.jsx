@@ -19,7 +19,6 @@ import {peerIdFromString} from '@libp2p/peer-id'
 
 import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
-import { send } from "process";
 
 
 export default function chatCore() {
@@ -67,9 +66,9 @@ export default function chatCore() {
         });
 
 
-        node.start();
+       await node.start();
         setNodE(node);
-
+        
         const addr = node.getMultiaddrs();
         setPeerId(addr.toString().slice(65, -1));
         alert(addr);
@@ -84,10 +83,12 @@ export default function chatCore() {
 
           // dial them when we discover them
 
-          node.dial(evt.detail.id).catch((err) => {
-            console.log(`Could not dial ${evt.detail.id}`, err);
-          });
+          // node.dial(evt.detail.id).then((e)=>console.warn(e)).catch((err) => {
+          //   console.warn(`Could not dial ${evt.detail.id}`, err);
+          // });
+
         });
+
 
         // Listen for new connections to peers
         node.connectionManager.addEventListener("peer:connect", (evt) => {
@@ -102,15 +103,19 @@ export default function chatCore() {
 
         });
 
-         node.pubsub.addEventListener("message", (evt) => {
-           console.warn(
-             "message received : ",
-             new TextDecoder().decode(evt.detail.data)
-           );
-           setMsg(new TextDecoder().decode(evt.detail.data));
-         });
+           node.pubsub.subscribe("testing")
 
-        node.pubsub.subscribe("fruit");
+           node.pubsub.addEventListener("message", (msg) => {
+             console.warn("inside listener");
+             console.warn(
+               "Received message in subscribe: ",
+               new TextDecoder().decode(msg.detail.data)
+             );
+             alert("it's listeninh")
+             setMsg(new TextDecoder().decode(msg.detail.data));
+           });
+
+     node.pubsub.publish("testing", new TextEncoder().encode("banana"));
 
 
       }catch(e){console.log("error in try : ",e)}
@@ -130,11 +135,11 @@ export default function chatCore() {
       );
       const connection = await nodE.dial(addr);
       console.warn("connecting to node : ", connection);
-      console.warn("connection status : ", connection.stat.status);
+      // console.warn("connection status : ", connection.stat.status);
 
-const stream = await connection.newStream(["/floodsub/1.0.0"]); // protocol can be found in prototyes/streams/0/stat
+//const stream = await connection.newStream(["/floodsub/1.0.0"]); // protocol can be found in prototyes/streams/0/stat
       
-      console.warn("stream : ", stream);
+    //  console.warn("stream : ", stream);
 
     }catch(e){console.warn("connecting to peer err: ",e)}
 
@@ -148,11 +153,25 @@ const stream = await connection.newStream(["/floodsub/1.0.0"]); // protocol can 
      
   };
 
-  const publishTopic = async(val)=>{
+  const publishTopic = async()=>{
 
-       nodE.pubsub.publish("fruit", new TextEncoder().encode(val));
+       nodE.pubsub.publish("testing", new TextEncoder().encode(sendVal));
          inputRef.current.value = "";
 
+  }
+
+  const listen = ()=>{
+
+    // nodE.pubsub.subscribe("fruit");
+
+    nodE.pubsub.addEventListener("message", (evt) => {
+       console.warn(
+         "message received : ",
+         new TextDecoder().decode(evt.detail.data)
+       );
+       alert("setting msg")
+       setMsg(new TextDecoder().decode(evt.detail.data));
+     });
   }
 
   
@@ -222,7 +241,7 @@ const stream = await connection.newStream(["/floodsub/1.0.0"]); // protocol can 
               className="btn btn-outline-secondary"
               type="button"
               id="button-addon2"
-              onClick={() => publishTopic(sendVal)}
+              onClick={() => publishTopic()}
             >
               publish
             </button>
