@@ -1,5 +1,6 @@
 import ImageFetch,{dogs,anime} from '../pages/api/imagesFetch'
 import React, { useEffect, useState } from "react";
+// import Image from 'next/image'
 
 function ImageSetLoader({ category }) {
   const [url, setUrl] = useState([]);
@@ -34,9 +35,9 @@ function ImageSetLoader({ category }) {
 
   return (
     <div>
-      {url.map((item) => {
+      {url.map((item,i) => {
         return (
-          <a target="_blank" href={item}>
+          <a key={i} target="_blank" href={item} rel="noreferrer">
             <img
               src={item ? item : null}
               className="img-caller rounded setImg"
