@@ -2,7 +2,7 @@
 import React, { useState,useRef} from "react";
 import Badge from "react-bootstrap/Badge";
 
-import  { createLibp2p } from "libp2p";
+import  Libp2p,{ createLibp2p } from "libp2p";
 import { webRTCStar } from "@libp2p/webrtc-star";
 import { noise } from "@chainsafe/libp2p-noise";
 import { mplex } from "@libp2p/mplex";
@@ -83,9 +83,9 @@ export default function chatCore() {
 
           // dial them when we discover them
 
-          // node.dial(evt.detail.id).then((e)=>console.warn(e)).catch((err) => {
-          //   console.warn(`Could not dial ${evt.detail.id}`, err);
-          // });
+          node.dial(evt.detail.id).catch((err) => {
+            console.log(`Could not dial ${evt.detail.id}`, err);
+          });
 
         });
 
@@ -133,7 +133,7 @@ export default function chatCore() {
         "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
           peers
       );
-      const connection = await nodE.dial(addr);
+      const connection = await nodE.dial(addr).catch((err)=>console.warn(err));
       console.warn("connecting to node : ", connection);
       // console.warn("connection status : ", connection.stat.status);
 
@@ -174,6 +174,19 @@ export default function chatCore() {
      });
   }
 
+  const pingMsg = async()=>{
+
+    
+     const addr = new Multiaddr(
+       "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
+         peers
+     );
+      const result = await nodE.ping(addr)
+      .then((res)=>alert(`round trip time : ${res} milliseconds`))
+      .catch((err)=>console.warn("err at ping : ",err))
+
+    }
+
   
   return (
     <>
@@ -203,6 +216,14 @@ export default function chatCore() {
               onClick={() => find()}
             >
               find
+            </button>
+            <button
+              className="btn btn-outline-secondary"
+              type="button"
+              id="button-addon2"
+              onClick={() => pingMsg()}
+            >
+              Ping
             </button>
             <button
               className="btn btn-outline-secondary"
