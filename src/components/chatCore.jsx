@@ -21,11 +21,12 @@ import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 
 
-export default function ChatCore() {
+export default function ChatCore(){
 
   const inputRef = useRef(null);
 
     const [nodE,setNodE] = useState();
+    const [intNode,setIntNode] = useState();
     const [peers,setPeers] = useState();
     const [peerId,setPeerId] = useState();
     const [msg,setMsg] = useState();
@@ -38,9 +39,6 @@ export default function ChatCore() {
         const wrtcStar = webRTCStar();
         const node = await createLibp2p({
           addresses: {
-            // Add the signaling server address, along with our PeerId to our multiaddrs list
-            // libp2p will automatically attempt to dial to the signaling server so that it can
-            // receive inbound connections from other peers
             listen: [
               "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
               // "/dns4/wrtc-star2.sjc.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
@@ -64,6 +62,42 @@ export default function ChatCore() {
           dht: kadDHT(),
           pubsub: floodsub(),
         });
+
+        // intermidatery node.... starts *************
+
+        const interId = PeerId.createFromB58String(
+          "Qmc4Eyvmeajwja4LbYnWesa7BsAxBzV98wsTurUyxugnit"
+        );
+
+        const interNode = await createLibp2p({
+          PeerId: interId.id,
+          addresses: {
+            listen: [
+              "/dns4/wrtc-star2.sjc.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
+            ],
+          },
+          transports: [webSockets(), wrtcStar.transport],
+          connectionEncryption: [noise()],
+          streamMuxers: [mplex()],
+          peerDiscovery: [
+            wrtcStar.discovery,
+            bootstrap({
+              list: [
+                "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+                "/dnsaddr/bootstrap.libp2p.io/p2p/QmZa1sAxajnQjVM8WjWXoMbmPd7NsWhfKsPkErzpm9wGkp",
+              ],
+            }),
+          ],
+          dht: kadDHT(),
+          pubsub: floodsub(),
+        });
+         
+        await interNode.start()
+        console.warn("intermediatery node : ", interNode);
+        setIntNode(interNode);
+
+        // intermidatery node.... ends ***********
+       
 
 
        await node.start();
@@ -104,6 +138,14 @@ export default function ChatCore() {
         });
 
            node.pubsub.subscribe("testing")
+            interNode.pubsub.subscribe("testing");
+
+           interNode.pubsub.on("message", (msg) => {
+             console.warn(
+               "Received message in subscribe: ",
+               new TextDecoder().decode(msg.data)
+             );
+           });
 
            node.pubsub.addEventListener("message", (msg) => {
              console.warn("inside listener");
@@ -115,7 +157,7 @@ export default function ChatCore() {
              setMsg(new TextDecoder().decode(msg.detail.data));
            });
 
-     node.pubsub.publish("testing", new TextEncoder().encode("banana"));
+    //  node.pubsub.publish("testing", new TextEncoder().encode("banana"));
 
 
       }catch(e){console.log("error in try : ",e)}
@@ -162,8 +204,6 @@ export default function ChatCore() {
 
   const listen = ()=>{
 
-    // nodE.pubsub.subscribe("fruit");
-
     nodE.pubsub.addEventListener("message", (evt) => {
        console.warn(
          "message received : ",
@@ -185,6 +225,20 @@ export default function ChatCore() {
       .then((res)=>alert(`round trip time : ${res} milliseconds`))
       .catch((err)=>console.warn("err at ping : ",err))
 
+    }
+
+    const interData = ()=>{
+
+     alert("inter data running...")
+       intNode.pubsub.addEventListener("message", (msg) => {
+         console.warn("inside listener");
+         console.warn(
+           "Received message in subscribe: ",
+           new TextDecoder().decode(msg.detail.data)
+         );
+         alert("it's listeninh");
+         setMsg(new TextDecoder().decode(msg.detail.data));
+       });
     }
 
   
@@ -270,7 +324,7 @@ export default function ChatCore() {
           <button className="btn btn-secondary" onClick={() => start()}>
             start
           </button>
-          <button className="btn btn-secondary" onClick={() => listen()}>
+          <button className="btn btn-secondary" onClick={() => interData()}>
             listen
           </button>
         </div>
