@@ -26,15 +26,14 @@ export default function ChatCore(){
   const inputRef = useRef(null);
 
     const [nodE,setNodE] = useState();
-    const [intNode,setIntNode] = useState();
     const [peers,setPeers] = useState();
     const [peerId,setPeerId] = useState();
     const [msg,setMsg] = useState();
     const [sendVal,setSendVal] = useState();
 
   const start = async()=>{
-  
-      try{
+
+    try{
 
         const wrtcStar = webRTCStar();
         const node = await createLibp2p({
@@ -66,7 +65,7 @@ export default function ChatCore(){
         // intermidatery node.... starts *************
 
         const interId = PeerId.createFromB58String(
-          "Qmc4Eyvmeajwja4LbYnWesa7BsAxBzV98wsTurUyxugnit"
+          "12D3KooWEbDVySzmBvBVUGdyWx46qC5u2z32M41YeBXtkpYbpjVn"
         );
 
         const interNode = await createLibp2p({
@@ -94,7 +93,6 @@ export default function ChatCore(){
          
         await interNode.start()
         console.warn("intermediatery node : ", interNode);
-        setIntNode(interNode);
 
         // intermidatery node.... ends ***********
        
@@ -111,7 +109,7 @@ export default function ChatCore(){
         // Listen for new peers
         node.addEventListener("peer:discovery", (evt) => {
           const peer = evt.detail.id.toString();
-          // console.log("peer discovered:",peer);
+          console.log("peer discovered:",peer);
         
 
 
@@ -138,7 +136,9 @@ export default function ChatCore(){
         });
 
            node.pubsub.subscribe("testing")
-          interNode.pubsub.subscribe("testing");
+          interNode.pubsub.subscribe("testing",(res)=>{
+            console.warn("subscribe listener")
+          });
 
 
            interNode.pubsub.addEventListener("message", (msg) => {
@@ -148,13 +148,12 @@ export default function ChatCore(){
 
            node.pubsub.addEventListener("message", (msg) => {
              console.warn("inside sender");
-            //  console.warn(
-            //    "Received message in subscribe: ",
-            //    new TextDecoder().decode(msg.detail.data)
-            //  );
+             //  console.warn(
+             //    "Received message in subscribe: ",
+             //    new TextDecoder().decode(msg.detail.data)
+             //  );
              setMsg(new TextDecoder().decode(msg.detail.data));
            });
-
 
       }catch(e){console.log("error in try : ",e)}
 
@@ -192,8 +191,7 @@ export default function ChatCore(){
   };
 
   const publishTopic = async()=>{
-
-       nodE.pubsub.publish("testing", new TextEncoder().encode(sendVal));
+          nodE.pubsub.publish("testing", new TextEncoder().encode(sendVal));
          inputRef.current.value = "";
 
   }
