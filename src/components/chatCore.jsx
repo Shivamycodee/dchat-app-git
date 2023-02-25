@@ -111,15 +111,15 @@ export default function ChatCore(){
         // Listen for new peers
         node.addEventListener("peer:discovery", (evt) => {
           const peer = evt.detail.id.toString();
-          console.log("peer discovered:",peer);
+          // console.log("peer discovered:",peer);
         
 
 
           // dial them when we discover them
 
-          node.dial(evt.detail.id).catch((err) => {
-            console.log(`Could not dial ${evt.detail.id}`, err);
-          });
+          // node.dial(evt.detail.id).catch((err) => {
+          //   console.log(`Could not dial ${evt.detail.id}`, err);
+          // });
 
         });
 
@@ -138,26 +138,22 @@ export default function ChatCore(){
         });
 
            node.pubsub.subscribe("testing")
-            interNode.pubsub.subscribe("testing");
+          interNode.pubsub.subscribe("testing");
 
-           interNode.pubsub.on("message", (msg) => {
-             console.warn(
-               "Received message in subscribe: ",
-               new TextDecoder().decode(msg.data)
-             );
+
+           interNode.pubsub.addEventListener("message", (msg) => {
+            console.warn("inside inter")
+             interNode.pubsub.publish("testing",msg.detail.data);
            });
 
            node.pubsub.addEventListener("message", (msg) => {
-             console.warn("inside listener");
-             console.warn(
-               "Received message in subscribe: ",
-               new TextDecoder().decode(msg.detail.data)
-             );
-             alert("it's listeninh")
+             console.warn("inside sender");
+            //  console.warn(
+            //    "Received message in subscribe: ",
+            //    new TextDecoder().decode(msg.detail.data)
+            //  );
              setMsg(new TextDecoder().decode(msg.detail.data));
            });
-
-    //  node.pubsub.publish("testing", new TextEncoder().encode("banana"));
 
 
       }catch(e){console.log("error in try : ",e)}
@@ -202,18 +198,6 @@ export default function ChatCore(){
 
   }
 
-  const listen = ()=>{
-
-    nodE.pubsub.addEventListener("message", (evt) => {
-       console.warn(
-         "message received : ",
-         new TextDecoder().decode(evt.detail.data)
-       );
-       alert("setting msg")
-       setMsg(new TextDecoder().decode(evt.detail.data));
-     });
-  }
-
   const pingMsg = async()=>{
 
     
@@ -226,21 +210,6 @@ export default function ChatCore(){
       .catch((err)=>console.warn("err at ping : ",err))
 
     }
-
-    const interData = ()=>{
-
-     alert("inter data running...")
-       intNode.pubsub.addEventListener("message", (msg) => {
-         console.warn("inside listener");
-         console.warn(
-           "Received message in subscribe: ",
-           new TextDecoder().decode(msg.detail.data)
-         );
-         alert("it's listeninh");
-         setMsg(new TextDecoder().decode(msg.detail.data));
-       });
-    }
-
   
   return (
     <>
