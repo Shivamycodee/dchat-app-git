@@ -32,6 +32,7 @@ export default function ChatCore(){
     const [sendVal,setSendVal] = useState();
 
   const start = async()=>{
+    alert("12D3KooWEbDVySzmBvBVUGdyWx46qC5u2z32M41YeBXtkpYbpjVn");
 
     try{
 
