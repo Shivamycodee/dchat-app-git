@@ -32,7 +32,6 @@ export default function ChatCore(){
     const [sendVal,setSendVal] = useState();
 
   const start = async()=>{
-    alert("12D3KooWEbDVySzmBvBVUGdyWx46qC5u2z32M41YeBXtkpYbpjVn");
 
     try{
 
@@ -63,42 +62,6 @@ export default function ChatCore(){
           pubsub: floodsub(),
         });
 
-        // intermidatery node.... starts *************
-
-        const interId = PeerId.createFromB58String(
-          "12D3KooWEbDVySzmBvBVUGdyWx46qC5u2z32M41YeBXtkpYbpjVn"
-        );
-
-        const interNode = await createLibp2p({
-          PeerId: interId.id,
-          addresses: {
-            listen: [
-              "/dns4/wrtc-star2.sjc.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
-            ],
-          },
-          transports: [webSockets(), wrtcStar.transport],
-          connectionEncryption: [noise()],
-          streamMuxers: [mplex()],
-          peerDiscovery: [
-            wrtcStar.discovery,
-            bootstrap({
-              list: [
-                "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
-                "/dnsaddr/bootstrap.libp2p.io/p2p/QmZa1sAxajnQjVM8WjWXoMbmPd7NsWhfKsPkErzpm9wGkp",
-              ],
-            }),
-          ],
-          dht: kadDHT(),
-          pubsub: floodsub(),
-        });
-         
-        await interNode.start()
-        console.warn("intermediatery node : ", interNode);
-
-        // intermidatery node.... ends ***********
-       
-
-
        await node.start();
         setNodE(node);
         
@@ -110,7 +73,7 @@ export default function ChatCore(){
         // Listen for new peers
         node.addEventListener("peer:discovery", (evt) => {
           const peer = evt.detail.id.toString();
-          console.log("peer discovered:",peer);
+          // console.log("peer discovered:",peer);
         
 
 
@@ -137,15 +100,6 @@ export default function ChatCore(){
         });
 
            node.pubsub.subscribe("testing")
-          interNode.pubsub.subscribe("testing",(res)=>{
-            console.warn("subscribe listener")
-          });
-
-
-           interNode.pubsub.addEventListener("message", (msg) => {
-            console.warn("inside inter")
-             interNode.pubsub.publish("testing",msg.detail.data);
-           });
 
            node.pubsub.addEventListener("message", (msg) => {
              console.warn("inside sender");
