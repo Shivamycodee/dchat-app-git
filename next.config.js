@@ -1,12 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // webpack: (
-  //   config,
-  //   { buildId, dev, isServer, defaultLoaders, nextRuntime, webpack }
-  // ) => {
-  //   return config;
-  // },
+  devIndicators: {
+    autoPrerender: false,
+    // make sure this is set to true
+    buildActivity: true,
+  },
 };
 
 

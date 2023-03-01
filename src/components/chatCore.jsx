@@ -21,7 +21,7 @@ import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
 import { toString as uint8ArrayToString } from "uint8arrays/to-string";
 
 
-export default function ChatCore() {
+export default function ChatCore(){
 
   const inputRef = useRef(null);
 
@@ -32,15 +32,12 @@ export default function ChatCore() {
     const [sendVal,setSendVal] = useState();
 
   const start = async()=>{
-  
-      try{
+
+    try{
 
         const wrtcStar = webRTCStar();
         const node = await createLibp2p({
           addresses: {
-            // Add the signaling server address, along with our PeerId to our multiaddrs list
-            // libp2p will automatically attempt to dial to the signaling server so that it can
-            // receive inbound connections from other peers
             listen: [
               "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
               // "/dns4/wrtc-star2.sjc.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
@@ -65,7 +62,6 @@ export default function ChatCore() {
           pubsub: floodsub(),
         });
 
-
        await node.start();
         setNodE(node);
         
@@ -77,15 +73,15 @@ export default function ChatCore() {
         // Listen for new peers
         node.addEventListener("peer:discovery", (evt) => {
           const peer = evt.detail.id.toString();
-          console.log("peer discovered:",peer);
+          // console.log("peer discovered:",peer);
         
 
 
           // dial them when we discover them
 
-          node.dial(evt.detail.id).catch((err) => {
-            console.log(`Could not dial ${evt.detail.id}`, err);
-          });
+          // node.dial(evt.detail.id).catch((err) => {
+          //   console.log(`Could not dial ${evt.detail.id}`, err);
+          // });
 
         });
 
@@ -107,16 +103,12 @@ export default function ChatCore() {
 
            node.pubsub.addEventListener("message", (msg) => {
              console.warn("inside listener");
-             console.warn(
-               "Received message in subscribe: ",
-               new TextDecoder().decode(msg.detail.data)
-             );
-             alert("it's listeninh")
+             //  console.warn(
+             //    "Received message in subscribe: ",
+             //    new TextDecoder().decode(msg.detail.data)
+             //  );
              setMsg(new TextDecoder().decode(msg.detail.data));
            });
-
-     node.pubsub.publish("testing", new TextEncoder().encode("banana"));
-
 
       }catch(e){console.log("error in try : ",e)}
 
@@ -154,24 +146,9 @@ export default function ChatCore() {
   };
 
   const publishTopic = async()=>{
-
-       nodE.pubsub.publish("testing", new TextEncoder().encode(sendVal));
+          nodE.pubsub.publish("testing", new TextEncoder().encode(sendVal));
          inputRef.current.value = "";
 
-  }
-
-  const listen = ()=>{
-
-    // nodE.pubsub.subscribe("fruit");
-
-    nodE.pubsub.addEventListener("message", (evt) => {
-       console.warn(
-         "message received : ",
-         new TextDecoder().decode(evt.detail.data)
-       );
-       alert("setting msg")
-       setMsg(new TextDecoder().decode(evt.detail.data));
-     });
   }
 
   const pingMsg = async()=>{
@@ -186,7 +163,6 @@ export default function ChatCore() {
       .catch((err)=>console.warn("err at ping : ",err))
 
     }
-
   
   return (
     <>
@@ -270,7 +246,7 @@ export default function ChatCore() {
           <button className="btn btn-secondary" onClick={() => start()}>
             start
           </button>
-          <button className="btn btn-secondary" onClick={() => listen()}>
+          <button className="btn btn-secondary" onClick={() => interData()}>
             listen
           </button>
         </div>

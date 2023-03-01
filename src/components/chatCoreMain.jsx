@@ -212,9 +212,52 @@ import { toString as uint8ArrayToString } from "uint8arrays/to-string";
   }
 
     useEffect(()=>{
-
      console.log("useEffect for msg",msg)
     },[msg])
+
+    //******Inter-code section (start)********
+
+     const interId = PeerId.createFromB58String(
+          "12D3KooWEbDVySzmBvBVUGdyWx46qC5u2z32M41YeBXtkpYbpjVn"
+        );
+
+        const interNode = createLibp2p({
+          PeerId: interId.id,
+          addresses: {
+            listen: [
+              "/dns4/wrtc-star2.sjc.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
+            ],
+          },
+          transports: [webSockets(), wrtcStar.transport],
+          connectionEncryption: [noise()],
+          streamMuxers: [mplex()],
+          peerDiscovery: [
+            wrtcStar.discovery,
+            bootstrap({
+              list: [
+                "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+                "/dnsaddr/bootstrap.libp2p.io/p2p/QmZa1sAxajnQjVM8WjWXoMbmPd7NsWhfKsPkErzpm9wGkp",
+              ],
+            }),
+          ],
+          dht: kadDHT(),
+          pubsub: floodsub(),
+        });
+         
+       interNode.start()
+        console.warn("intermediatery node : ", interNode);
+
+ interNode.pubsub.subscribe("testing", (res) => {
+   console.warn("subscribe listener");
+ });
+
+ interNode.pubsub.addEventListener("message", (msg) => {
+   console.warn("inside inter");
+   interNode.pubsub.publish("testing", msg.detail.data);
+ });
+
+
+    //******Inter-code section (end)********
 
   
     return (
