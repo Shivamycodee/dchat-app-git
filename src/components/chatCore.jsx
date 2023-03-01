@@ -102,7 +102,7 @@ export default function ChatCore(){
            node.pubsub.subscribe("testing")
 
            node.pubsub.addEventListener("message", (msg) => {
-             console.warn("inside sender");
+             console.warn("inside listener");
              //  console.warn(
              //    "Received message in subscribe: ",
              //    new TextDecoder().decode(msg.detail.data)
