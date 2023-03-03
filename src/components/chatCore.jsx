@@ -1,8 +1,13 @@
 
-import React, { useState,useRef} from "react";
+import React, { useState,useEffect,useRef} from "react";
 import Badge from "react-bootstrap/Badge";
+import Dropdown from "react-bootstrap/Dropdown";
+import DropdownButton from "react-bootstrap/DropdownButton";
+import InputGroup from "react-bootstrap/InputGroup";
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
 
-import  Libp2p,{ createLibp2p } from "libp2p";
+import  { createLibp2p } from "libp2p";
 import { webRTCStar } from "@libp2p/webrtc-star";
 import { noise } from "@chainsafe/libp2p-noise";
 import { mplex } from "@libp2p/mplex";
@@ -12,27 +17,40 @@ import { kadDHT } from "@libp2p/kad-dht";
 import { bootstrap } from "@libp2p/bootstrap";
 
 import { floodsub } from "@libp2p/floodsub";
+// import { gossipsub } from "@chainsafe/libp2p-gossipsub";
+
 
 import PeerId from "peer-id";
 import {peerIdFromString} from '@libp2p/peer-id'
 
 
-import { fromString as uint8ArrayFromString } from "uint8arrays/from-string";
-import { toString as uint8ArrayToString } from "uint8arrays/to-string";
+const topStyle = {
+            marginLeft: 10,
+            height: 37,
+            padding: 4,
+            borderRadius: 9,
+            textAlign: "center",
+            fontSize: 14,
+}
+
 
 
 export default function ChatCore(){
 
   const inputRef = useRef(null);
+  const topicRef = useRef(null);
+  const selectedTopic = useRef(null);
 
-    const [nodE,setNodE] = useState();
+    const [nodE,setNodE] = useState(null);
     const [peers,setPeers] = useState();
     const [peerId,setPeerId] = useState();
     const [msg,setMsg] = useState();
     const [sendVal,setSendVal] = useState();
+    const [topic, setTopic] = useState(["Default"]);
+    const [activeTopic,setActiveTopic] = useState("Default")
+    const [chats,setChats] = useState([]);
 
   const start = async()=>{
-
     try{
 
         const wrtcStar = webRTCStar();
@@ -60,11 +78,11 @@ export default function ChatCore(){
           ],
           dht: kadDHT(),
           pubsub: floodsub(),
-        });
+        }); 
 
        await node.start();
         setNodE(node);
-        
+
         const addr = node.getMultiaddrs();
         setPeerId(addr.toString().slice(65, -1));
         alert(addr);
@@ -73,24 +91,16 @@ export default function ChatCore(){
         // Listen for new peers
         node.addEventListener("peer:discovery", (evt) => {
           const peer = evt.detail.id.toString();
-          // console.log("peer discovered:",peer);
-        
-
-
-          // dial them when we discover them
-
-          // node.dial(evt.detail.id).catch((err) => {
-          //   console.log(`Could not dial ${evt.detail.id}`, err);
-          // });
-
+      
         });
 
 
         // Listen for new connections to peers
-        node.connectionManager.addEventListener("peer:connect", (evt) => {
-          const connection = evt.detail;
-          console.log(`Connected to ${connection.remotePeer.toString()}`);
-        });
+
+        // node.connectionManager.addEventListener("peer:connect", (evt) => {
+        //   const connection = evt.detail;
+        //   console.log(`Connected to ${connection.remotePeer.toString()}`);
+        // });
 
         // Listen for peers disconnecting
         node.connectionManager.addEventListener("peer:disconnect", (evt) => {
@@ -99,15 +109,18 @@ export default function ChatCore(){
 
         });
 
-           node.pubsub.subscribe("testing")
+          //  node.pubsub.subscribe(topic[0],(msg)=>{
+          //   console.warn("subscribe mesg : ",msg)
+          //  })
+           node.pubsub.subscribe(topic[0]);
+
+
 
            node.pubsub.addEventListener("message", (msg) => {
-             console.warn("inside listener");
-             //  console.warn(
-             //    "Received message in subscribe: ",
-             //    new TextDecoder().decode(msg.detail.data)
-             //  );
-             setMsg(new TextDecoder().decode(msg.detail.data));
+            console.log(msg);
+            console.warn("topic : ",msg.detail.topic)
+            let tempMsg = new TextDecoder().decode(msg.detail.data);
+             setChats(...chats, "Received : " + tempMsg);
            });
 
       }catch(e){console.log("error in try : ",e)}
@@ -126,13 +139,9 @@ export default function ChatCore(){
           peers
       );
       const connection = await nodE.dial(addr).catch((err)=>console.warn(err));
-      console.warn("connecting to node : ", connection);
-      // console.warn("connection status : ", connection.stat.status);
-
-//const stream = await connection.newStream(["/floodsub/1.0.0"]); // protocol can be found in prototyes/streams/0/stat
-      
-    //  console.warn("stream : ", stream);
-
+      // console.warn("connected 👌 : ", connection);
+      alert("connected 👌")
+    
     }catch(e){console.warn("connecting to peer err: ",e)}
 
   }
@@ -146,14 +155,18 @@ export default function ChatCore(){
   };
 
   const publishTopic = async()=>{
-          nodE.pubsub.publish("testing", new TextEncoder().encode(sendVal));
-         inputRef.current.value = "";
+
+    let _topic = selectedTopic.current.value;
+     setChats([...chats,"sended : "+sendVal])
+    // nodE.pubsub.subscribe(_topic);
+       console.log("comm topic : ",_topic);
+       nodE.pubsub.publish(_topic, new TextEncoder().encode(sendVal));
+       inputRef.current.value = "";
 
   }
 
   const pingMsg = async()=>{
 
-    
      const addr = new Multiaddr(
        "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/p2p/" +
          peers
@@ -163,9 +176,57 @@ export default function ChatCore(){
       .catch((err)=>console.warn("err at ping : ",err))
 
     }
+
+    const changeRoom = (item)=>{
+      setActiveTopic(item)
+      nodE.pubsub.subscribe(item);
+    }
+
+    const addTopic = ()=>{
+
+  nodE.pubsub.unsubscribe(topic[topic.length-1]);
+  setTopic([...topic, topicRef.current.value]);
+  setActiveTopic(topicRef.current.value);
+  nodE.pubsub.subscribe(topicRef.current.value);
+  topicRef.current.value = " ";
+
+    }
+
+    useEffect(()=>{
+    },[topic])
   
   return (
     <>
+      <div style={{ marginTop: 80 }}>
+        <DropdownButton
+          style={{ display: "inline", marginLeft: 50 }}
+          id="dropdown-item-button"
+          title="Rooms"
+        >
+          {topic.map((item, i) => {
+            return (
+              <Dropdown.Item key={i + 1} as="button" onClick={()=>changeRoom(item)}>
+                {item}
+              </Dropdown.Item>
+            );
+          })}
+        </DropdownButton>
+
+        <input
+          className="border border-primary"
+          ref={selectedTopic}
+          style={topStyle}
+          value={activeTopic}
+          disabled
+        ></input>
+        {/* <input
+          className="border border-primary"
+          ref={selectedTopic}
+          style={topStyle}
+          value={getCount()}
+          disabled
+        ></input> */}
+      </div>
       <div className="peerHolder">
         <div>
           <h1>
@@ -197,31 +258,21 @@ export default function ChatCore(){
               className="btn btn-outline-secondary"
               type="button"
               id="button-addon2"
-              onClick={() => pingMsg()}
-            >
-              Ping
-            </button>
-            <button
-              className="btn btn-outline-secondary"
-              type="button"
-              id="button-addon2"
               onClick={() => connect()}
             >
               connect
             </button>
           </div>
         </div>
-
         <div className="input-group">
           <textarea
             className="form-control"
             placeholder="Chats..."
             aria-label="Chats"
-            value={msg}
+            value={`${chats}`}
             readOnly
           />
         </div>
-
         <div className="input-group mb-3">
           <input
             type="text"
@@ -246,10 +297,29 @@ export default function ChatCore(){
           <button className="btn btn-secondary" onClick={() => start()}>
             start
           </button>
-          <button className="btn btn-secondary" onClick={() => interData()}>
-            listen
+          <button
+            className="btn btn-secondary"
+            onClick={() => [nodE.stop(), console.warn("stop : ", nodE)]}
+          >
+            stop
           </button>
         </div>
+        <InputGroup className="mb-3">
+          <InputGroup.Text id="inputGroup-sizing-default">
+            Add Topic
+          </InputGroup.Text>
+          <Form.Control
+            aria-label="Default"
+            aria-describedby="inputGroup-sizing-default"
+            ref={topicRef}
+          />
+          <Button
+            variant="secondary"
+            onClick={() => topic.indexOf(topicRef.current.value) === -1 ? addTopic():alert("already exist")}
+          >
+            ADD
+          </Button>{" "}
+        </InputGroup>
       </div>
     </>
   );

@@ -3,10 +3,10 @@ import ChatCore from '@/components/chatCore'
 
 function ChatIndex() {
   return (
-    <div>
-    <ChatCore/>
-    </div>
-  )
+    <>
+        <ChatCore />
+    </>
+  );
 }
 
 export default ChatIndex
