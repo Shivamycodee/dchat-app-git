@@ -80,8 +80,7 @@ export default function ChatCore() {
       setNodE(node);
 
       const addr = node.getMultiaddrs();
-      setPeerId(addr.toString().slice(65, -1));
-      alert(addr);
+      setPeerId(addr.toString().slice(65));
 
       // Listen for new peers
       node.addEventListener("peer:discovery", (evt) => {
@@ -170,6 +169,7 @@ export default function ChatCore() {
 
   const changeRoom = (item) => {
     setActiveTopic(item);
+    toast(`🏠 Room changed to ${item}`);
     nodE.pubsub.subscribe(item);
   };
 
@@ -179,7 +179,7 @@ export default function ChatCore() {
     setTopic([...topic, temp]);
     setActiveTopic(temp);
     nodE.pubsub.subscribe(temp);
-    toast.info(`🏠 Room ${temp} Created`);
+    toast(`🏠 Room ${temp} Created`);
     topicRef.current.value = " ";
   };
 
@@ -193,7 +193,7 @@ export default function ChatCore() {
   return (
     <>
       <ToastContainer
-        autoClose={1400}
+        autoClose={1200}
         hideProgressBar={false}
         newestOnTop={true}
         closeOnClick
@@ -234,10 +234,11 @@ export default function ChatCore() {
             Your ID{" "}
             <Alert
               onClick={() => (peerId ? handleCopy() : alert("start node"))}
-              style={{ fontSize: 23, cursor: "pointer", overflow: "hidden" }}
+              style={{ fontSize: 21, cursor: "pointer", overflow: "hidden",width:"90%" }}
               key="secondary"
               variant="secondary"
             >
+              {console.log("peer id is : ",peerId)}
               {peerId}
             </Alert>
           </h1>
@@ -264,7 +265,7 @@ export default function ChatCore() {
               className="btn btn-outline-secondary"
               type="button"
               id="button-addon2"
-              onClick={() => connect()}
+              onClick={() => connectPeer()}
             >
               connect
             </button>
