@@ -158,3 +158,70 @@ margin-right: 10px;
 .peerHolder > div{
   margin-bottom: 40px;
 }
+
+
+
+  /* chatbox style css */
+
+ .chat-box-container {
+  height: 400px;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  overflow-y: scroll;
+}
+
+.message-container {
+  height: 100%;
+  padding: 10px;
+}
+
+.message {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 5px;
+}
+
+.message-text {
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.sent {
+  justify-content: flex-end;
+}
+
+.received {
+  justify-content: flex-start;
+}
+
+.sent .message-text {
+  background-color: #0084ff;
+  color: white;
+  align-self: flex-end;
+}
+
+.received .message-text {
+  background-color: #f0f0f0;
+  color: black;
+  align-self: flex-start;
+}
+
+.input-container {
+  margin-top: 10px;
+}
+
+.message-input {
+  border-radius: 10px;
+  border: none;
+}
+
+.send-button {
+  border-radius: 10px;
+  background-color: #0084ff;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  margin-left: 5px;
+}

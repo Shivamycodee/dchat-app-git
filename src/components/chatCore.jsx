@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Form, Button, Row, Col, Container } from "react-bootstrap";
+
+import ChatBox from './chatBox'
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
 import InputGroup from "react-bootstrap/InputGroup";
-import Form from "react-bootstrap/Form";
 import Alert from "react-bootstrap/Alert";
 import Copy from "copy-to-clipboard";
 import { ToastContainer, toast } from "react-toastify";
 
 
 
-import Libp2p,{ createLibp2p } from "libp2p";
+import { createLibp2p } from "libp2p";
 import { webRTCStar } from "@libp2p/webrtc-star";
 import { noise } from "@chainsafe/libp2p-noise";
 import { mplex } from "@libp2p/mplex";
@@ -54,6 +56,36 @@ export default function ChatCore() {
     title: "",
     url: "",
   });
+
+  const [messages, setMessages] = useState([]);
+  const [inputValue, setInputValue] = useState("");
+  const [recValue,setRecValue] = useState("");
+
+  const handleInputChange = (event) => {
+    setInputValue(event.target.value);
+  };
+
+  const handleSendMessage = () => {
+    // send message to server or update state directly
+    const newMessage = {
+      text: inputValue,
+      timestamp: Date.now(),
+      sender: "user",
+    };
+    setMessages([...messages, newMessage]);
+    setInputValue("");
+  };
+
+  const handleReceiveMessage = () => {
+    // received message to server or update state directly
+    const newMessage = {
+      text: recValue,
+      timestamp: Date.now(),
+      sender: "received",
+    };
+    setMessages([...messages, newMessage]);
+    setInputValue("");
+  };
 
   const wrtcStar = webRTCStar();
 
@@ -122,6 +154,8 @@ export default function ChatCore() {
         console.warn("topic : ", msg.detail.topic);
         let tempMsg = new TextDecoder().decode(msg.detail.data);
         setMsg(tempMsg);
+        setRecValue(tempMsg);
+        handleReceiveMessage();
       });
 
     } catch (e) {
@@ -313,7 +347,11 @@ export default function ChatCore() {
             >
               {console.log("peer id is : ", peerId)}
               {peerId}
-              <button style={{marginLeft:10}} className="btn btn-secondary" onClick={()=>handleShare()}>
+              <button
+                style={{ marginLeft: 10 }}
+                className="btn btn-secondary"
+                onClick={() => handleShare()}
+              >
                 Share
               </button>
             </Alert>
@@ -348,13 +386,42 @@ export default function ChatCore() {
           </div>
         </div>
         <div className="input-group">
-          <textarea
-            className="form-control"
-            placeholder="Chats..."
-            aria-label="Chats"
-            value={msg}
-            readOnly
-          />
+          {/* chat space */}
+
+          <Container className="chat-box-container">
+            <Row className="message-container">
+              <Col className="message-list">
+                {messages.map((message) => (
+                  <div
+                    key={message.timestamp}
+                    className={`message ${
+                      message.sender === "user" ? "sent" : "received"
+                    }`}
+                  >
+                    <span className="message-text">{message.text}</span>
+                  </div>
+                ))}
+              </Col>
+            </Row>
+            <Row className="input-container">
+              <Col>
+                {/* <Form.Control
+                  type="text"
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  placeholder="Type a message..."
+                  className="message-input"
+                /> */}
+              </Col>
+              <Col xs="auto">
+                {/* <Button onClick={handleSendMessage} className="send-button">
+                  Send
+                </Button> */}
+              </Col>
+            </Row>
+          </Container>
+
+          {/* chat space end*/}
         </div>
         <div className="input-group mb-3">
           <input
@@ -365,19 +432,21 @@ export default function ChatCore() {
             aria-label="message..."
             aria-describedby="button-addon2"
             ref={inputRef}
-            onChange={(e) => setSendVal(e.target.value)}
+            // onChange={(e) => setSendVal(e.target.value)}
+            onChange={handleInputChange}
           />
           <div className="input-group-append">
             <button
               className="btn btn-outline-secondary"
               type="button"
               id="button-addon2"
-              onClick={() => publishTopic()}
+              // onClick={() => publishTopic()}
+              onClick={handleSendMessage}
             >
               publish
             </button>
           </div>
-          <button className="btn btn-secondary" onClick={() =>start()}>
+          <button className="btn btn-secondary" onClick={() => start()}>
             start
           </button>
           <button
