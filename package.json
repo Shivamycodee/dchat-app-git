@@ -27,6 +27,7 @@
     "copy-to-clipboard": "^3.3.3",
     "eslint": "8.34.0",
     "eslint-config-next": "13.1.6",
+    "ethers": "^5.4.0",
     "jquery": "^3.6.3",
     "libp2p-transport": "^0.2.1",
     "multiaddr": "^10.0.1",

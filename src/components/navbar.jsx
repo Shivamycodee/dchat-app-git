@@ -1,8 +1,12 @@
 import React from 'react'
 import Link from 'next/link'
+import { useGlobalContext } from 'context/connectWallet';
 
 
 function Navbar() {
+
+  const {wallet} = useGlobalContext();
+
   return (
     <nav style={{ padding: 10, background: "black" }}>
       <ul
@@ -15,7 +19,7 @@ function Navbar() {
           <a
             className="nav-link active"
             id="pills-home-tab"
-            data-toggle="pill"
+            data-toggle="pill"    
             href={"/"}
             role="tab"
             aria-controls="pills-home"
@@ -27,7 +31,7 @@ function Navbar() {
         <li className="nav-item">
           <a
             className="nav-link"
-            id="pills-profile-tab"
+            id="pills-profile-tab"           
             data-toggle="pill"
             href="#pills-profile"
             role="tab"
@@ -51,7 +55,7 @@ function Navbar() {
           </a>
         </li>
         <li>
-          <button className="btn btn-primary walletConnect">
+          <button className="btn btn-primary walletConnect" onClick={()=>wallet()}>
             <code style={{ fontSize: 20, color: "white" }}>connect wallet</code>
           </button>
         </li>

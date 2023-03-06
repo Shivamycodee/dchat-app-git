@@ -9,8 +9,7 @@ import { ToastContainer, toast } from "react-toastify";
 
 
 
-
-import { createLibp2p } from "libp2p";
+import Libp2p,{ createLibp2p } from "libp2p";
 import { webRTCStar } from "@libp2p/webrtc-star";
 import { noise } from "@chainsafe/libp2p-noise";
 import { mplex } from "@libp2p/mplex";
@@ -22,8 +21,10 @@ import { bootstrap } from "@libp2p/bootstrap";
 import { floodsub } from "@libp2p/floodsub";
 // import { gossipsub } from "@chainsafe/libp2p-gossipsub";
 
-import PeerId from "peer-id";
+import PeerID from "peer-id";
 import { peerIdFromString } from "@libp2p/peer-id";
+
+import {useGlobalContext} from '../../context/connectWallet'
 
 const topStyle = {
   marginLeft: 10,
@@ -35,6 +36,9 @@ const topStyle = {
 };
 
 export default function ChatCore() {
+
+  const { account } = useGlobalContext();
+
   const inputRef = useRef(null);
   const topicRef = useRef(null);
   const selectedTopic = useRef(null);
@@ -46,10 +50,16 @@ export default function ChatCore() {
   const [sendVal, setSendVal] = useState();
   const [topic, setTopic] = useState(["Default"]);
   const [activeTopic, setActiveTopic] = useState("Default");
+  const [shareData, setShareData] = useState({
+    title: "",
+    url: "",
+  });
+
+  const wrtcStar = webRTCStar();
 
   const start = async () => {
+    toast(account)
     try {
-      const wrtcStar = webRTCStar();
       const node = await createLibp2p({
         addresses: {
           listen: [
@@ -78,10 +88,12 @@ export default function ChatCore() {
 
       await node.start();
       setNodE(node);
+      localStorage.setItem(account,node.peerId);
 
+  
       const addr = node.getMultiaddrs();
       setPeerId(addr.toString().slice(65));
-
+      
       // Listen for new peers
       node.addEventListener("peer:discovery", (evt) => {
         const peer = evt.detail.id.toString();
@@ -111,10 +123,49 @@ export default function ChatCore() {
         let tempMsg = new TextDecoder().decode(msg.detail.data);
         setMsg(tempMsg);
       });
+
     } catch (e) {
-      console.log("error in try : ", e);
+      console.error("error in try : ", e);
     }
   };
+
+  const continueNode = async()=>{
+
+    let tempId = localStorage.getItem(account);
+    const peerId = PeerID.createFromB58String(tempId);
+
+    let node = await createLibp2p({
+      PeerId: peerId,
+      addresses: {
+        listen: [
+          "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
+        ],
+      },
+        transports: [webSockets(), wrtcStar.transport],
+        connectionEncryption: [noise()],
+        streamMuxers: [mplex()],
+        peerDiscovery: [wrtcStar.discovery],
+        dht: kadDHT(),
+        pubsub: floodsub(),
+    });
+
+   
+     setNodE(node);
+    console.warn("continue node : ",node)
+
+      const addr = node.getMultiaddrs();
+      setPeerId(addr.toString().slice(65));
+
+     node.pubsub.subscribe(topic[0]);
+
+     node.pubsub.addEventListener("message", (msg) => {
+       console.log(msg);
+       console.warn("topic : ", msg.detail.topic);
+       let tempMsg = new TextDecoder().decode(msg.detail.data);
+       setMsg(tempMsg);
+     });
+
+  }
 
   const connect = async () => {
 
@@ -188,7 +239,29 @@ export default function ChatCore() {
      toast.success(`📋 Copied To Clipboard`);
   }
 
-  useEffect(() =>{}, [topic]);
+  const handleStart = ()=>{
+    if(account){
+         if(localStorage.getItem(account) === null) start();
+         else continueNode();
+    }else toast.info("Please Connect Your Wallet")
+  }
+
+  const handleShare = async()=>{
+       try {
+    await navigator.share(shareData);
+  } catch (error) {
+    console.error('Error sharing:', error.message);
+  }
+  
+  }
+
+  useEffect(() =>{
+        if(peerId)  setShareData({
+          title: "peerId_",
+          url: `${peerId}`,
+        });
+  }, [topic,peerId]);
+
 
   return (
     <>
@@ -231,15 +304,18 @@ export default function ChatCore() {
       <div className="peerHolder">
         <div>
           <h1>
-            Your ID{" "}
+            Your ID <br />
             <Alert
               onClick={() => (peerId ? handleCopy() : alert("start node"))}
-              style={{ fontSize: 21, cursor: "pointer", overflow: "hidden",width:"90%" }}
+              style={{ fontSize: 21, cursor: "pointer", overflow: "hidden" }}
               key="secondary"
               variant="secondary"
             >
-              {console.log("peer id is : ",peerId)}
+              {console.log("peer id is : ", peerId)}
               {peerId}
+              <button style={{marginLeft:10}} className="btn btn-secondary" onClick={()=>handleShare()}>
+                Share
+              </button>
             </Alert>
           </h1>
         </div>
@@ -301,7 +377,7 @@ export default function ChatCore() {
               publish
             </button>
           </div>
-          <button className="btn btn-secondary" onClick={() => start()}>
+          <button className="btn btn-secondary" onClick={() =>start()}>
             start
           </button>
           <button
@@ -320,6 +396,7 @@ export default function ChatCore() {
             aria-describedby="inputGroup-sizing-default"
             ref={topicRef}
           />
+
           <button
             className="btn btn-secondary"
             onClick={() =>
