@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Form, Button, Row, Col, Container } from "react-bootstrap";
 
-import ChatBox from './chatBox'
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
 import InputGroup from "react-bootstrap/InputGroup";
@@ -28,18 +27,9 @@ import { peerIdFromString } from "@libp2p/peer-id";
 
 import {useGlobalContext} from '../../context/connectWallet'
 
-const topStyle = {
-  marginLeft: 10,
-  height: 37,
-  padding: 4,
-  borderRadius: 9,
-  textAlign: "center",
-  fontSize: 14,
-};
-
 export default function ChatCore() {
 
-  const { account } = useGlobalContext();
+  const { account, getTimeData, getDateData, topStyle } = useGlobalContext();
 
   const inputRef = useRef(null);
   const topicRef = useRef(null);
@@ -48,8 +38,6 @@ export default function ChatCore() {
   const [nodE, setNodE] = useState(null);
   const [peers, setPeers] = useState();
   const [peerId, setPeerId] = useState();
-  const [msg, setMsg] = useState();
-  const [sendVal, setSendVal] = useState();
   const [topic, setTopic] = useState(["Default"]);
   const [activeTopic, setActiveTopic] = useState("Default");
   const [shareData, setShareData] = useState({
@@ -60,6 +48,17 @@ export default function ChatCore() {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [recValue,setRecValue] = useState("");
+
+  const [roomData,setRoomData] = useState([]);
+
+  const handleRoomData = async()=>{
+
+    const rmdata = {
+      room: activeTopic,
+      data:messages
+    }
+    setRoomData([...roomData,rmdata]);
+  }
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -73,7 +72,8 @@ export default function ChatCore() {
       sender: "user",
     };
     setMessages([...messages, newMessage]);
-    setInputValue("");
+    
+    // setInputValue("");   // why this...
   };
 
   const handleReceiveMessage = () => {
@@ -81,16 +81,15 @@ export default function ChatCore() {
     const newMessage = {
       text: recValue,
       timestamp: Date.now(),
-      sender: "received",
+      sender: "receive",
     };
     setMessages([...messages, newMessage]);
-    setInputValue("");
+    // setInputValue(""); // why this...
   };
 
   const wrtcStar = webRTCStar();
 
   const start = async () => {
-    toast(account)
     try {
       const node = await createLibp2p({
         addresses: {
@@ -120,7 +119,6 @@ export default function ChatCore() {
 
       await node.start();
       setNodE(node);
-      localStorage.setItem(account,node.peerId);
 
   
       const addr = node.getMultiaddrs();
@@ -150,12 +148,8 @@ export default function ChatCore() {
       node.pubsub.subscribe(topic[0]);
 
       node.pubsub.addEventListener("message", (msg) => {
-        console.log(msg);
-        console.warn("topic : ", msg.detail.topic);
         let tempMsg = new TextDecoder().decode(msg.detail.data);
-        setMsg(tempMsg);
         setRecValue(tempMsg);
-        handleReceiveMessage();
       });
 
     } catch (e) {
@@ -194,9 +188,7 @@ export default function ChatCore() {
 
      node.pubsub.addEventListener("message", (msg) => {
        console.log(msg);
-       console.warn("topic : ", msg.detail.topic);
        let tempMsg = new TextDecoder().decode(msg.detail.data);
-       setMsg(tempMsg);
      });
 
   }
@@ -211,21 +203,27 @@ export default function ChatCore() {
     console.warn("connected 👌",connection)
   };
 
-  const connectPeer = ()=>{
-    toast.promise(connect, {
-      pending: {
-        render() {
-          return "🕑 connecting... ";
-        },
-        position: "top-center",
-      },
-      success: {
-        render() {
-          return "👏 connected ";
-        },
-        error: "🤕 Try again  ",
-      },
-    });
+  const connectPeer = async()=>{
+
+    const anId = peerIdFromString(peers);
+    const res = await nodE.peerStore
+      .get(anId).then(()=>{
+         toast.promise(connect, {
+           pending: {
+             render() {
+               return "🕑 connecting... ";
+             },
+             position: "top-center",
+           },
+           success: {
+             render() {
+               return "👏 connected ";
+             },
+             error: "🤕 Try again  ",
+           },
+         });
+      })
+      .catch(() => toast.info("🤕 peer not found try again..."));
   }
 
   const find = async () => {
@@ -235,9 +233,11 @@ export default function ChatCore() {
   };
 
   const publishTopic = async () => {
+    handleSendMessage();
+    localStorage.setItem(account, JSON.stringify(messages));
     let _topic = selectedTopic.current.value;
     console.log("comm topic : ", _topic);
-    nodE.pubsub.publish(_topic, new TextEncoder().encode(sendVal));
+    nodE.pubsub.publish(_topic, new TextEncoder().encode(inputValue));
     inputRef.current.value = "";
   };
 
@@ -259,6 +259,9 @@ export default function ChatCore() {
   };
 
   const addTopic = () => {
+    console.warn("inside addTopic");
+    handleRoomData();
+    localStorage.setItem(account+"room",JSON.stringify(roomData))
     let temp = topicRef.current.value;
     nodE.pubsub.unsubscribe(topic[topic.length - 1]);
     setTopic([...topic, temp]);
@@ -266,6 +269,7 @@ export default function ChatCore() {
     nodE.pubsub.subscribe(temp);
     toast(`🏠 Room ${temp} Created`);
     topicRef.current.value = " ";
+
   };
 
   const handleCopy = ()=>{
@@ -294,7 +298,38 @@ export default function ChatCore() {
           title: "peerId_",
           url: `${peerId}`,
         });
+        
   }, [topic,peerId]);
+
+  useEffect(() => {
+    if (recValue) {
+      handleReceiveMessage();
+      localStorage.setItem(account, JSON.stringify(messages));
+
+    // if(roomData){
+    //   roomData.map((val)=>{
+    //     val.room == activeTopic ? val.data = messages:null
+    //   })
+    //   localStorage.setItem(account+"room",JSON.stringify(roomData))
+    // }else{
+    //   handleRoomData();
+    //   localStorage.setItem(account + "room", JSON.stringify(roomData));
+    // }
+
+    }
+  }, [recValue]);
+
+useEffect(()=>{
+      console.warn("inside useEffect addTopic");
+
+},[addTopic])
+
+  useEffect(()=>{
+      if(localStorage.getItem(account)){ 
+        setMessages(JSON.parse(localStorage.getItem(account)));
+        // setRoomData(JSON.parse(localStorage.getItem(account)));
+      }
+  },[account])
 
 
   return (
@@ -308,7 +343,7 @@ export default function ChatCore() {
         theme="light"
         draggable
       />
-      <div style={{ marginTop: 80 }}>
+      <div style={{ marginTop: 60 }}>
         <DropdownButton
           style={{ display: "inline", marginLeft: 50 }}
           id="dropdown-item-button"
@@ -334,6 +369,15 @@ export default function ChatCore() {
           value={activeTopic}
           disabled
         ></input>
+        <button
+          style={{ marginLeft: "44%", width: 170 }}
+          className="btn btn-outline-primary"
+          onClick={() =>
+            account ? start() : toast.info("connect your wallet")
+          }
+        >
+          Start 🚀
+        </button>
       </div>
       <div className="peerHolder">
         <div>
@@ -345,14 +389,13 @@ export default function ChatCore() {
               key="secondary"
               variant="secondary"
             >
-              {console.log("peer id is : ", peerId)}
               {peerId}
               <button
                 style={{ marginLeft: 10 }}
                 className="btn btn-secondary"
                 onClick={() => handleShare()}
               >
-                Share
+                Share 🤝
               </button>
             </Alert>
           </h1>
@@ -371,24 +414,25 @@ export default function ChatCore() {
               className="btn btn-outline-secondary"
               type="button"
               id="button-addon2"
-              onClick={() => find()}
-            >
-              find
-            </button>
-            <button
-              className="btn btn-outline-secondary"
-              type="button"
-              id="button-addon2"
               onClick={() => connectPeer()}
             >
-              connect
+              connect 🔗
             </button>
           </div>
         </div>
-        <div className="input-group">
-          {/* chat space */}
 
+        {/* chat space */}
+
+        <div className="input-group">
           <Container className="chat-box-container">
+            <div className="container">
+              <div className="d-flex align-items-center">
+                <div className="flex-grow-1 border-top"></div>
+                <div className="px-3">{getDateData()}</div>
+                <div className="flex-grow-1 border-top"></div>
+              </div>
+            </div>
+
             <Row className="message-container">
               <Col className="message-list">
                 {messages.map((message) => (
@@ -398,64 +442,44 @@ export default function ChatCore() {
                       message.sender === "user" ? "sent" : "received"
                     }`}
                   >
-                    <span className="message-text">{message.text}</span>
+                    <span className="message-text">
+                      {message.text}{" "}
+                      <img
+                      style={{width:15,height:15,marginLeft:3,marginTop:10}}
+                        src="/images/double-tick.png"
+                        alt="double tick"
+                      ></img>
+                    </span>
+
+                    <div
+                      style={{ fontSize: 13 }}
+                      className="align-self-end small text-muted"
+                    >
+                      {getTimeData(message.timestamp)}
+                    </div>
                   </div>
                 ))}
               </Col>
             </Row>
-            <Row className="input-container">
-              <Col>
-                {/* <Form.Control
-                  type="text"
-                  value={inputValue}
-                  onChange={handleInputChange}
-                  placeholder="Type a message..."
-                  className="message-input"
-                /> */}
-              </Col>
-              <Col xs="auto">
-                {/* <Button onClick={handleSendMessage} className="send-button">
-                  Send
-                </Button> */}
-              </Col>
-            </Row>
           </Container>
-
-          {/* chat space end*/}
         </div>
-        <div className="input-group mb-3">
-          <input
-            type="text"
-            id="chatInput"
-            className="form-control"
-            placeholder="message..."
-            aria-label="message..."
-            aria-describedby="button-addon2"
+
+        {/* chat space end*/}
+
+        <InputGroup className="mb-3">
+          <Form.Control
+            aria-label="Default"
+            aria-describedby="inputGroup-sizing-default"
+            placeholder="type a message..."
             ref={inputRef}
-            // onChange={(e) => setSendVal(e.target.value)}
             onChange={handleInputChange}
           />
-          <div className="input-group-append">
-            <button
-              className="btn btn-outline-secondary"
-              type="button"
-              id="button-addon2"
-              // onClick={() => publishTopic()}
-              onClick={handleSendMessage}
-            >
-              publish
-            </button>
-          </div>
-          <button className="btn btn-secondary" onClick={() => start()}>
-            start
+
+          <button className="btn btn-secondary" onClick={() => publishTopic()}>
+            SEND 🏹
           </button>
-          <button
-            className="btn btn-secondary"
-            onClick={() => [nodE.stop(), console.warn("stop : ", nodE)]}
-          >
-            stop
-          </button>
-        </div>
+        </InputGroup>
+
         <InputGroup className="mb-3">
           <InputGroup.Text id="inputGroup-sizing-default">
             Add Topic
@@ -474,7 +498,7 @@ export default function ChatCore() {
                 : alert("already exist")
             }
           >
-            ADD
+            ADD ➕
           </button>
         </InputGroup>
       </div>

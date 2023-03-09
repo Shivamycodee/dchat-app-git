@@ -1,4 +1,4 @@
-import React from 'react'
+import React,{useEffect} from 'react'
 import Link from 'next/link'
 import { useGlobalContext } from 'context/connectWallet';
 
@@ -6,6 +6,10 @@ import { useGlobalContext } from 'context/connectWallet';
 function Navbar() {
 
   const {wallet} = useGlobalContext();
+
+  useEffect(()=>{
+    wallet()
+  },[])
 
   return (
     <nav style={{ padding: 10, background: "black" }}>
