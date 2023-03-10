@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Form, Button, Row, Col, Container } from "react-bootstrap";
+import { useRouter } from "next/router";
 
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
@@ -49,15 +50,15 @@ export default function ChatCore() {
   const [inputValue, setInputValue] = useState("");
   const [recValue,setRecValue] = useState("");
 
-  const [roomData,setRoomData] = useState([]);
+  const [roomData,setRoomData] = useState([{room:"Default",data:[]}]);
 
-  const handleRoomData = async()=>{
+  const handleRoomData = ()=>{
 
     const rmdata = {
       room: activeTopic,
       data:messages
     }
-    setRoomData([...roomData,rmdata]);
+    setRoomData([rmdata]);
   }
 
   const handleInputChange = (event) => {
@@ -234,7 +235,6 @@ export default function ChatCore() {
 
   const publishTopic = async () => {
     handleSendMessage();
-    localStorage.setItem(account, JSON.stringify(messages));
     let _topic = selectedTopic.current.value;
     console.log("comm topic : ", _topic);
     nodE.pubsub.publish(_topic, new TextEncoder().encode(inputValue));
@@ -259,13 +259,12 @@ export default function ChatCore() {
   };
 
   const addTopic = () => {
-    console.warn("inside addTopic");
-    handleRoomData();
-    localStorage.setItem(account+"room",JSON.stringify(roomData))
+    // handleRoomData();
     let temp = topicRef.current.value;
     nodE.pubsub.unsubscribe(topic[topic.length - 1]);
     setTopic([...topic, temp]);
     setActiveTopic(temp);
+    setMessages("");
     nodE.pubsub.subscribe(temp);
     toast(`🏠 Room ${temp} Created`);
     topicRef.current.value = " ";
@@ -277,12 +276,6 @@ export default function ChatCore() {
      toast.success(`📋 Copied To Clipboard`);
   }
 
-  const handleStart = ()=>{
-    if(account){
-         if(localStorage.getItem(account) === null) start();
-         else continueNode();
-    }else toast.info("Please Connect Your Wallet")
-  }
 
   const handleShare = async()=>{
        try {
@@ -293,49 +286,68 @@ export default function ChatCore() {
   
   }
 
-  useEffect(() =>{
+   useEffect(() => {        // To print data paired with address
+     if (localStorage.getItem(account)) {
+       setMessages(JSON.parse(localStorage.getItem(account)));
+     }
+   }, [account]);
+
+  useEffect(() =>{           // TO handle nearby share functionality
         if(peerId)  setShareData({
           title: "peerId_",
           url: `${peerId}`,
-        });
-        
+        });     
   }, [topic,peerId]);
 
   useEffect(() => {
     if (recValue) {
       handleReceiveMessage();
-      localStorage.setItem(account, JSON.stringify(messages));
-
-    // if(roomData){
-    //   roomData.map((val)=>{
-    //     val.room == activeTopic ? val.data = messages:null
-    //   })
-    //   localStorage.setItem(account+"room",JSON.stringify(roomData))
-    // }else{
-    //   handleRoomData();
-    //   localStorage.setItem(account + "room", JSON.stringify(roomData));
-    // }
-
     }
   }, [recValue]);
 
-useEffect(()=>{
-      console.warn("inside useEffect addTopic");
-
-},[addTopic])
-
   useEffect(()=>{
-      if(localStorage.getItem(account)){ 
-        setMessages(JSON.parse(localStorage.getItem(account)));
-        // setRoomData(JSON.parse(localStorage.getItem(account)));
+      localStorage.setItem(account, JSON.stringify(messages));
+
+      if (localStorage.getItem(account + "room")) {
+        JSON.parse(localStorage.getItem(account + "room")).map((val, i) => {
+          if (val.room === activeTopic && val.room !== null) {
+            console.info("expected if");
+
+            setRoomData((prevState)=>{
+              const temp = [...prevState];
+
+              temp[i].data = messages;
+                return temp;
+              })
+            
+          } else {
+            console.info("else in if effect ");
+            const rmdata = {
+              room: activeTopic,
+              data: messages,
+            };
+            setRoomData([...roomData, rmdata]);
+          }
+        });
+      } else {
+        console.info("not expecting");
+        handleRoomData();
       }
-  },[account])
+     
+  },[messages])
+
+
+ useEffect(()=>{
+  console.info("room data saved locally")
+  localStorage.setItem(account + "room", JSON.stringify(roomData));
+ },[roomData])
+
 
 
   return (
     <>
       <ToastContainer
-        autoClose={1200}
+        autoClose={600}
         hideProgressBar={false}
         newestOnTop={true}
         closeOnClick
@@ -343,6 +355,13 @@ useEffect(()=>{
         theme="light"
         draggable
       />
+      <button
+        className="btn btn-info"
+        onClick={() => console.log("roomData : ",roomData)}
+      >
+        save data
+      </button>
+
       <div style={{ marginTop: 60 }}>
         <DropdownButton
           style={{ display: "inline", marginLeft: 50 }}
@@ -361,7 +380,6 @@ useEffect(()=>{
             );
           })}
         </DropdownButton>
-
         <input
           className="border border-primary"
           ref={selectedTopic}
@@ -435,7 +453,7 @@ useEffect(()=>{
 
             <Row className="message-container">
               <Col className="message-list">
-                {messages.map((message) => (
+                {messages ? messages.map((message) => (
                   <div
                     key={message.timestamp}
                     className={`message ${
@@ -445,7 +463,12 @@ useEffect(()=>{
                     <span className="message-text">
                       {message.text}{" "}
                       <img
-                      style={{width:15,height:15,marginLeft:3,marginTop:10}}
+                        style={{
+                          width: 15,
+                          height: 15,
+                          marginLeft: 3,
+                          marginTop: 10,
+                        }}
                         src="/images/double-tick.png"
                         alt="double tick"
                       ></img>
@@ -458,7 +481,7 @@ useEffect(()=>{
                       {getTimeData(message.timestamp)}
                     </div>
                   </div>
-                ))}
+                )):null}
               </Col>
             </Row>
           </Container>
