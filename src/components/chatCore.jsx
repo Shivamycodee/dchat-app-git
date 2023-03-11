@@ -362,12 +362,12 @@ export default function ChatCore() {
         theme="light"
         draggable
       />
-      <button
+      {/* <button
         className="btn btn-info"
         onClick={() => console.log("roomData : ",roomData)}
       >
         save data
-      </button>
+      </button> */}
 
       <div style={{ marginTop: 60 }}>
         <DropdownButton
