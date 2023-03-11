@@ -50,7 +50,7 @@ export default function ChatCore() {
   const [inputValue, setInputValue] = useState("");
   const [recValue,setRecValue] = useState("");
 
-  const [roomData,setRoomData] = useState([{room:"Default",data:[]}]);
+  const [roomData,setRoomData] = useState([]);
 
   const handleRoomData = ()=>{
 
@@ -264,7 +264,7 @@ export default function ChatCore() {
     nodE.pubsub.unsubscribe(topic[topic.length - 1]);
     setTopic([...topic, temp]);
     setActiveTopic(temp);
-    setMessages("");
+    setMessages([]);
     nodE.pubsub.subscribe(temp);
     toast(`🏠 Room ${temp} Created`);
     topicRef.current.value = " ";
@@ -309,26 +309,31 @@ export default function ChatCore() {
       localStorage.setItem(account, JSON.stringify(messages));
 
       if (localStorage.getItem(account + "room")) {
+             let flag = true;
         JSON.parse(localStorage.getItem(account + "room")).map((val, i) => {
+
           if (val.room === activeTopic && val.room !== null) {
             console.info("expected if");
-
+            flag = false;
             setRoomData((prevState)=>{
               const temp = [...prevState];
-
+              console.log("temp is : ",temp)
               temp[i].data = messages;
                 return temp;
               })
             
-          } else {
-            console.info("else in if effect ");
-            const rmdata = {
-              room: activeTopic,
-              data: messages,
-            };
-            setRoomData([...roomData, rmdata]);
-          }
+          } 
         });
+
+        if(flag){
+           console.info("else in if effect ");
+           const rmdata = {
+             room: activeTopic,
+             data: messages,
+           };
+           setRoomData([...roomData, rmdata]);
+        }
+
       } else {
         console.info("not expecting");
         handleRoomData();
@@ -338,8 +343,10 @@ export default function ChatCore() {
 
 
  useEffect(()=>{
-  console.info("room data saved locally")
-  localStorage.setItem(account + "room", JSON.stringify(roomData));
+  if(account){
+    localStorage.setItem(account + "room", JSON.stringify(roomData));
+  }
+   
  },[roomData])
 
 

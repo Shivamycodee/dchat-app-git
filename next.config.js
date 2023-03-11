@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   devIndicators: {
     // autoPrerender: false,
     // make sure this is set to true
