@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Form, Button, Row, Col, Container } from "react-bootstrap";
-import { useRouter } from "next/router";
 
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
@@ -8,7 +7,6 @@ import InputGroup from "react-bootstrap/InputGroup";
 import Alert from "react-bootstrap/Alert";
 import Copy from "copy-to-clipboard";
 import { ToastContainer, toast } from "react-toastify";
-
 
 
 import { createLibp2p } from "libp2p";
@@ -25,6 +23,9 @@ import { floodsub } from "@libp2p/floodsub";
 
 import PeerID from "peer-id";
 import { peerIdFromString } from "@libp2p/peer-id";
+
+import Helios from "helios-ipfs";
+const helios = new Helios();
 
 import {useGlobalContext} from '../../context/connectWallet'
 
@@ -51,6 +52,8 @@ export default function ChatCore() {
   const [recValue,setRecValue] = useState("");
 
   const [roomData,setRoomData] = useState([]);
+
+  
 
   const handleRoomData = ()=>{
 
@@ -180,17 +183,11 @@ export default function ChatCore() {
 
    
      setNodE(node);
-    console.warn("continue node : ",node)
 
       const addr = node.getMultiaddrs();
       setPeerId(addr.toString().slice(65));
 
      node.pubsub.subscribe(topic[0]);
-
-     node.pubsub.addEventListener("message", (msg) => {
-       console.log(msg);
-       let tempMsg = new TextDecoder().decode(msg.detail.data);
-     });
 
   }
 
@@ -201,7 +198,7 @@ export default function ChatCore() {
           peers
       );
       const connection = await nodE.dial(addr).catch((err) => console.warn("connecting to peer err: ", err));
-    console.warn("connected 👌",connection)
+    // console.warn("connected 👌",connection)
   };
 
   const connectPeer = async()=>{
@@ -253,13 +250,18 @@ export default function ChatCore() {
   };
 
   const changeRoom = (item) => {
-    setActiveTopic(item);
+    setActiveTopic(item);    
     toast(`🏠 Room changed to ${item}`);
     nodE.pubsub.subscribe(item);
+
+    roomData.map((val) => {
+      if (val.room === item) {
+        setMessages(val.data);
+      }
+    });
   };
 
   const addTopic = () => {
-    // handleRoomData();
     let temp = topicRef.current.value;
     nodE.pubsub.unsubscribe(topic[topic.length - 1]);
     setTopic([...topic, temp]);
@@ -286,6 +288,26 @@ export default function ChatCore() {
   
   }
 
+  const saveChat = async()=>{
+
+  const cid = await helios.addJSON(roomData);
+    console.info("your cid : ",cid.toString());
+    localStorage.setItem(`${account}cid`,cid);
+
+
+  }
+
+  async function getObject() {
+    const ipfs = await IPFS.create();
+    const chunks = [];
+    const cid = localStorage.getItem(`${account}cid`);
+    for await (const chunk of ipfs.cat(cid)) {
+      chunks.push(chunk);
+    }
+    const jsonStr = Buffer.concat(chunks).toString();
+    console.info("ipfs data : ",jsonStr);
+  }
+
    useEffect(() => {        // To print data paired with address
      if (localStorage.getItem(account)) {
        setMessages(JSON.parse(localStorage.getItem(account)));
@@ -305,6 +327,7 @@ export default function ChatCore() {
     }
   }, [recValue]);
 
+ 
   useEffect(()=>{
       localStorage.setItem(account, JSON.stringify(messages));
 
@@ -313,12 +336,11 @@ export default function ChatCore() {
         JSON.parse(localStorage.getItem(account + "room")).map((val, i) => {
 
           if (val.room === activeTopic && val.room !== null) {
-            console.info("expected if");
             flag = false;
-            setRoomData((prevState)=>{
-              const temp = [...prevState];
-              console.log("temp is : ",temp)
-              temp[i].data = messages;
+
+              setRoomData((prevState)=>{
+                const temp = [...prevState];
+                temp[i].data = messages;
                 return temp;
               })
             
@@ -326,7 +348,6 @@ export default function ChatCore() {
         });
 
         if(flag){
-           console.info("else in if effect ");
            const rmdata = {
              room: activeTopic,
              data: messages,
@@ -335,7 +356,6 @@ export default function ChatCore() {
         }
 
       } else {
-        console.info("not expecting");
         handleRoomData();
       }
      
@@ -350,7 +370,6 @@ export default function ChatCore() {
  },[roomData])
 
 
-
   return (
     <>
       <ToastContainer
@@ -362,13 +381,6 @@ export default function ChatCore() {
         theme="light"
         draggable
       />
-      {/* <button
-        className="btn btn-info"
-        onClick={() => console.log("roomData : ",roomData)}
-      >
-        save data
-      </button> */}
-
       <div style={{ marginTop: 60 }}>
         <DropdownButton
           style={{ display: "inline", marginLeft: 50 }}
@@ -407,7 +419,7 @@ export default function ChatCore() {
       <div className="peerHolder">
         <div>
           <h1>
-            Your ID <br />
+            Your ID 
             <Alert
               onClick={() => (peerId ? handleCopy() : alert("start node"))}
               style={{ fontSize: 21, cursor: "pointer", overflow: "hidden" }}
@@ -460,35 +472,37 @@ export default function ChatCore() {
 
             <Row className="message-container">
               <Col className="message-list">
-                {messages ? messages.map((message) => (
-                  <div
-                    key={message.timestamp}
-                    className={`message ${
-                      message.sender === "user" ? "sent" : "received"
-                    }`}
-                  >
-                    <span className="message-text">
-                      {message.text}{" "}
-                      <img
-                        style={{
-                          width: 15,
-                          height: 15,
-                          marginLeft: 3,
-                          marginTop: 10,
-                        }}
-                        src="/images/double-tick.png"
-                        alt="double tick"
-                      ></img>
-                    </span>
+                {messages
+                  ? messages.map((message) => (
+                      <div
+                        key={message.timestamp}
+                        className={`message ${
+                          message.sender === "user" ? "sent" : "received"
+                        }`}
+                      >
+                        <span className="message-text">
+                          {message.text}{" "}
+                          <img
+                            style={{
+                              width: 15,
+                              height: 15,
+                              marginLeft: 3,
+                              marginTop: 10,
+                            }}
+                            src="/images/double-tick.png"
+                            alt="double tick"
+                          ></img>
+                        </span>
 
-                    <div
-                      style={{ fontSize: 13 }}
-                      className="align-self-end small text-muted"
-                    >
-                      {getTimeData(message.timestamp)}
-                    </div>
-                  </div>
-                )):null}
+                        <div
+                          style={{ fontSize: 13 }}
+                          className="align-self-end small text-muted"
+                        >
+                          {getTimeData(message.timestamp)}
+                        </div>
+                      </div>
+                    ))
+                  : null}
               </Col>
             </Row>
           </Container>
@@ -502,7 +516,7 @@ export default function ChatCore() {
             aria-describedby="inputGroup-sizing-default"
             placeholder="type a message..."
             ref={inputRef}
-            onChange={handleInputChange}
+            onChange={(e) => handleInputChange(e)}
           />
 
           <button className="btn btn-secondary" onClick={() => publishTopic()}>
@@ -531,6 +545,14 @@ export default function ChatCore() {
             ADD ➕
           </button>
         </InputGroup>
+        <div>
+        <button className="btn btn-warning" style={{width:"49.5%",height:50,marginRight:5}} onClick={()=>saveChat()}>
+          🍀 Save Your Chat On IPFS 🍀
+        </button>
+        <button className="btn btn-dark" style={{width:"49.5%",height:50}} onClick={()=>getObject()}>
+          🍀 Get Your Chat From IPFS 🍀
+        </button>
+        </div>
       </div>
     </>
   );
