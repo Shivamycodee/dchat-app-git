@@ -63,6 +63,7 @@ export default function AccessControl() {
 
   const deleteStream = ()=>{
     localStorage.clear();
+    window.location.reload();
   }
 
   // async function deleteStream() {

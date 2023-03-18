@@ -49,6 +49,7 @@ useEffect(() => {
 
   const reloadPlayer = ()=>{
   setPlayerKey((prevKey) => prevKey + 1);
+
   }
 
   return (
