@@ -1,5 +1,6 @@
 import styles from '@/styles/Home.module.css'
 import Link from 'next/link';
+import Image from 'next/image';
 
 
 
@@ -7,7 +8,6 @@ export default function Home() {
 
   return (
     <>
-
       <main>
         <div className="container">
           <div className="inline-container">
@@ -38,7 +38,9 @@ export default function Home() {
                   className="img-caller rounded"
                   alt="Responsive image"
                 />
-                <figcaption style={{ marginLeft: 170 }}>UPLOAD ON LIVEPEER</figcaption>
+                <figcaption style={{ marginLeft: 170 }}>
+                  UPLOAD ON LIVEPEER
+                </figcaption>
               </Link>
             </figure>
             <figure>

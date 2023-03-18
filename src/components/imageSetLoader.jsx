@@ -37,7 +37,12 @@ function ImageSetLoader({ category }) {
     <div>
       {url.map((item,i) => {
         return (
-          <a key={i} target="_blank" href={item} rel="noreferrer">
+          <a
+            key={i}
+            rel="noreferrer"
+            target="_blank"
+            href={item}
+          >
             <img
               src={item ? item : null}
               className="img-caller rounded setImg"

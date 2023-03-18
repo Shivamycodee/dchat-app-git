@@ -480,7 +480,13 @@ export default function ChatCore() {
                       >
                         <span className="message-text">
                           {isURL(message.text) ? (
-                            <a style={{color:"white"}} href={message.text} target="_blank" alt="lnk">
+                            <a
+                              style={{ color: "white" }}
+                              href={message.text}
+                              rel="noreferrer"
+                              target="_blank"
+                              alt="lnk"
+                            >
                               {message.text}
                             </a>
                           ) : (
