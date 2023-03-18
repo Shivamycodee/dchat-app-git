@@ -6,7 +6,7 @@ const accessControlPrivateKey =
 const accessControlPublicKey =
   "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFQ0tJVlZ3REdWbHN2b3RSVDBPcHh4S1ptYlNoZgptZkRScWNuMVhrc2R4Z1VoZ2xWZDBQSjZ3YW1HNlZIeXBWWUFLdVFPckVGRVBEUjV2MGVhazQ5aUpRPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==";
  
-const jwtHandler = async (req, res) => {
+const JwtHandler = async (req, res) => {
 
   try {
     const method = req.method;
@@ -52,4 +52,4 @@ const jwtHandler = async (req, res) => {
   }
 };
  
-export default jwtHandler;
+export default JwtHandler;

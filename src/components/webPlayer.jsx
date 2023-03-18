@@ -5,7 +5,7 @@ import { useKeyContext } from "context/keyHandler";
 
 
 
-function webPlayer() {
+function WebPlayer() {
   const client = new Client();
 
   const { streamKey, playbackId, name, streamStatus } =
@@ -83,4 +83,4 @@ useEffect(() => {
   );
 }
 
-export default webPlayer
+export default WebPlayer

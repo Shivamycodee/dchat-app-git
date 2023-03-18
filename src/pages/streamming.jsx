@@ -7,7 +7,7 @@ import {
   studioProvider,
 } from "@livepeer/react";
 
-function streamming() {
+function Streamming() {
 
     const livepeerClient = createReactClient({
       provider: studioProvider({
@@ -25,4 +25,4 @@ function streamming() {
   );
 }
 
-export default streamming;
+export default Streamming;
