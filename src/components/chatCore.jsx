@@ -24,14 +24,12 @@ import { floodsub } from "@libp2p/floodsub";
 import PeerID from "peer-id";
 import { peerIdFromString } from "@libp2p/peer-id";
 
-import Helios from "helios-ipfs";
-const helios = new Helios();
-
 import {useGlobalContext} from '../../context/connectWallet'
 
 export default function ChatCore() {
 
-  const { account, getTimeData, getDateData, topStyle } = useGlobalContext();
+  const { account, getTimeData, getDateData, topStyle, isURL } =
+    useGlobalContext();
 
   const inputRef = useRef(null);
   const topicRef = useRef(null);
@@ -419,7 +417,7 @@ export default function ChatCore() {
       <div className="peerHolder">
         <div>
           <h1>
-            Your ID 
+            Your ID
             <Alert
               onClick={() => (peerId ? handleCopy() : alert("start node"))}
               style={{ fontSize: 21, cursor: "pointer", overflow: "hidden" }}
@@ -481,7 +479,14 @@ export default function ChatCore() {
                         }`}
                       >
                         <span className="message-text">
-                          {message.text}{" "}
+                          {isURL(message.text) ? (
+                            <a style={{color:"white"}} href={message.text} target="_blank" alt="lnk">
+                              {message.text}
+                            </a>
+                          ) : (
+                            message.text
+                          )}
+                          {/* {console.warn("is URL : ", isURL(message.text))} */}
                           <img
                             style={{
                               width: 15,
@@ -546,12 +551,20 @@ export default function ChatCore() {
           </button>
         </InputGroup>
         <div>
-        <button className="btn btn-warning" style={{width:"49.5%",height:50,marginRight:5}} onClick={()=>saveChat()}>
-          🍀 Save Your Chat On IPFS 🍀
-        </button>
-        <button className="btn btn-dark" style={{width:"49.5%",height:50}} onClick={()=>getObject()}>
-          🍀 Get Your Chat From IPFS 🍀
-        </button>
+          <button
+            className="btn btn-warning"
+            style={{ width: "49.5%", height: 50, marginRight: 5 }}
+            onClick={() => saveChat()}
+          >
+            🍀 Save Your Chat On IPFS 🍀
+          </button>
+          <button
+            className="btn btn-dark"
+            style={{ width: "49.5%", height: 50 }}
+            onClick={() => getObject()}
+          >
+            🍀 Get Your Chat From IPFS 🍀
+          </button>
         </div>
       </div>
     </>

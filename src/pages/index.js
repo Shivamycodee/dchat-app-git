@@ -7,6 +7,7 @@ export default function Home() {
 
   return (
     <>
+
       <main>
         <div className="container">
           <div className="inline-container">
@@ -17,7 +18,7 @@ export default function Home() {
                   className="img-caller rounded"
                   alt="Responsive image"
                 />
-                <figcaption style={{ marginLeft: 240 }}>Images</figcaption>
+                <figcaption style={{ marginLeft: 240 }}>IMAGES</figcaption>
               </Link>
             </figure>
             <figure>
@@ -27,10 +28,29 @@ export default function Home() {
                   className="img-caller rounded"
                   alt="Responsive image"
                 />
-                <figcaption style={{ marginLeft: 240 }}>Chat</figcaption>
+                <figcaption style={{ marginLeft: 240 }}>CHAT</figcaption>
               </Link>
             </figure>
-            
+            <figure>
+              <Link href="upLivepeer">
+                <img
+                  src="images/image.png"
+                  className="img-caller rounded"
+                  alt="Responsive image"
+                />
+                <figcaption style={{ marginLeft: 170 }}>UPLOAD ON LIVEPEER</figcaption>
+              </Link>
+            </figure>
+            <figure>
+              <Link href="streamming">
+                <img
+                  src="images/image.png"
+                  className="img-caller rounded"
+                  alt="Responsive image"
+                />
+                <figcaption style={{ marginLeft: 230 }}>LIVE STREAM</figcaption>
+              </Link>
+            </figure>
           </div>
         </div>
       </main>

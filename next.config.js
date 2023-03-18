@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+
+
 const nextConfig = {
   reactStrictMode: false,
   devIndicators: {
@@ -9,4 +11,5 @@ const nextConfig = {
 };
 
 
-module.exports = nextConfig
+module.exports = nextConfig;
+
