@@ -53,6 +53,16 @@ export default function Home() {
                 <figcaption style={{ marginLeft: 230 }}>LIVE STREAM</figcaption>
               </Link>
             </figure>
+            <figure>
+              <Link href="videoMeet">
+                <img
+                  src="images/image.png"
+                  className="img-caller rounded"
+                  alt="Responsive image"
+                />
+                <figcaption style={{ marginLeft: 230 }}>VIDEO CALL</figcaption>
+              </Link>
+            </figure>
           </div>
         </div>
       </main>
