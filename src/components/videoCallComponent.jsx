@@ -22,7 +22,7 @@ import {
    measurementId: "G-NZ5M5N4HMP",
  };
 
-function videoCallComponent() {
+function VideoCallComponent() {
 
     
   const app = initializeApp(firebaseConfig);
@@ -71,24 +71,28 @@ function videoCallComponent() {
      });
      setLocalStream(stream);
      setRemoteStream(new MediaStream());
-
+     
+     
      if (!localStream || !remoteStream) {
+       console.log(`local ${localStream} and remote ${remoteStream}`);
        console.warn("Local or remote stream is not set.");
        return;
-     }
+      }
+            // console.log(`out loop local ${localStream} and remote ${remoteStream}`);
+            
+            stream.getTracks().forEach((track) => {
+              pc.addTrack(track, stream);
+            });
+       
+            pc.ontrack = (event) => {
+             event.streams[0].getTracks().forEach((track) => {
+               remoteStream.addTrack(track);
+             });
+           };
 
-     stream.getTracks().forEach((track) => {
-       pc.addTrack(track, stream);
-     });
-
-     pc.ontrack = (event) => {
-       event.streams[0].getTracks().forEach((track) => {
-         remoteStream.addTrack(track);
-       });
-     };
-
-     webcamVideo.current.srcObject = stream;
-     remoteVideo.current.srcObject = remoteStream;
+      webcamVideo.current.srcObject = stream;
+      remoteVideo.current.srcObject = remoteStream;
+      
    };
 
    // stream web cam ends...
@@ -105,6 +109,7 @@ function videoCallComponent() {
        callInput.current.value = callDoc.id;
 
        pc.onicecandidate = (event) => {
+         console.log("onicecandidtae event ran 👑")
          event.candidate && addDoc(offerCandidates, event.candidate.toJSON());
        };
        const offerDescription = await pc.createOffer();
@@ -150,8 +155,7 @@ function videoCallComponent() {
        event.candidate && addDoc(answerCandidates, event.candidate.toJSON());
      };
 
-     //  const callData = (await callDoc.get()).data();
-     // const callData = (await get(callDoc)).data();
+    
      const callData = (await getDoc(callDoc)).data();
 
      const offerDescription = callData.offer;
@@ -168,6 +172,7 @@ function videoCallComponent() {
      await updateDoc(callDoc, { answer });
 
      onSnapshot(offerCandidates, (snapshot) => {
+      console.log("snapshot run in answer")
        snapshot.docChanges().forEach((change) => {
          if (change.type === "added") {
            let data = change.doc.data();
@@ -226,4 +231,4 @@ function videoCallComponent() {
   );
 }
 
-export default videoCallComponent;
+export default VideoCallComponent;

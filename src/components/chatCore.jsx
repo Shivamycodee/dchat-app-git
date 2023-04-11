@@ -5,7 +5,6 @@ import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
 import InputGroup from "react-bootstrap/InputGroup";
 import Alert from "react-bootstrap/Alert";
-import Copy from "copy-to-clipboard";
 import { ToastContainer, toast } from "react-toastify";
 
 
@@ -26,18 +25,29 @@ import { peerIdFromString } from "@libp2p/peer-id";
 
 import {useGlobalContext} from '../../context/connectWallet'
 
+import { createHelia } from "helia";
+import { unixfs } from "@helia/unixfs";
+import { MemoryBlockstore } from "blockstore-core";
+import { MemoryDatastore } from "datastore-core";
+
 export default function ChatCore() {
 
-  const { account, getTimeData, getDateData, topStyle, isURL } =
+  const { account, getTimeData, getDateData, topStyle, isURL, handleCopy } =
     useGlobalContext();
 
   const inputRef = useRef(null);
   const topicRef = useRef(null);
   const selectedTopic = useRef(null);
 
+
+  // user node...
   const [nodE, setNodE] = useState(null);
-  const [peers, setPeers] = useState();
+  // user peerId
   const [peerId, setPeerId] = useState();
+
+  // peers to connect (only one)
+  const [peers, setPeers] = useState();
+
   const [topic, setTopic] = useState(["Default"]);
   const [activeTopic, setActiveTopic] = useState("Default");
   const [shareData, setShareData] = useState({
@@ -51,10 +61,12 @@ export default function ChatCore() {
 
   const [roomData,setRoomData] = useState([]);
 
+  // for helia node.
+  const [fs,setFs] = useState();
+
   
 
   const handleRoomData = ()=>{
-
     const rmdata = {
       room: activeTopic,
       data:messages
@@ -109,9 +121,9 @@ export default function ChatCore() {
             list: [
               "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
               "/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
-              "/dnsaddr/bootstrap.libp2p.io/p2p/QmZa1sAxajnQjVM8WjWXoMbmPd7NsWhfKsPkErzpm9wGkp",
-              "/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
-              "/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
+              // "/dnsaddr/bootstrap.libp2p.io/p2p/QmZa1sAxajnQjVM8WjWXoMbmPd7NsWhfKsPkErzpm9wGkp",
+              // "/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
+              // "/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
             ],
           }),
         ],
@@ -139,14 +151,12 @@ export default function ChatCore() {
       // });
 
       // Listen for peers disconnecting
+
       node.connectionManager.addEventListener("peer:disconnect", (evt) => {
         const connection = evt.detail;
         console.log(`Disconnected from ${connection.remotePeer.toString()}`);
       });
 
-      //  node.pubsub.subscribe(topic[0],(msg)=>{
-      //   console.warn("subscribe mesg : ",msg)
-      //  })
       node.pubsub.subscribe(topic[0]);
 
       node.pubsub.addEventListener("message", (msg) => {
@@ -154,41 +164,30 @@ export default function ChatCore() {
         setRecValue(tempMsg);
       });
 
+
+      //creating helia node.
+      const blockstore = new MemoryBlockstore();
+      const datastore = new MemoryDatastore();
+
+        const helia = await createHelia({
+          node,
+          blockstore,
+          datastore
+
+        });
+ 
+        const fsTemp = unixfs(helia);
+        setFs(fsTemp);
+        
+      
+
     } catch (e) {
       console.error("error in try : ", e);
     }
   };
 
-  const continueNode = async()=>{
 
-    let tempId = localStorage.getItem(account);
-    const peerId = PeerID.createFromB58String(tempId);
-
-    let node = await createLibp2p({
-      PeerId: peerId,
-      addresses: {
-        listen: [
-          "/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star",
-        ],
-      },
-        transports: [webSockets(), wrtcStar.transport],
-        connectionEncryption: [noise()],
-        streamMuxers: [mplex()],
-        peerDiscovery: [wrtcStar.discovery],
-        dht: kadDHT(),
-        pubsub: floodsub(),
-    });
-
-   
-     setNodE(node);
-
-      const addr = node.getMultiaddrs();
-      setPeerId(addr.toString().slice(65));
-
-     node.pubsub.subscribe(topic[0]);
-
-  }
-
+  
   const connect = async () => {
 
       const addr = new Multiaddr(
@@ -199,8 +198,8 @@ export default function ChatCore() {
     // console.warn("connected 👌",connection)
   };
 
+  // connecting to peer
   const connectPeer = async()=>{
-
     const anId = peerIdFromString(peers);
     const res = await nodE.peerStore
       .get(anId).then(()=>{
@@ -222,16 +221,10 @@ export default function ChatCore() {
       .catch(() => toast.info("🤕 peer not found try again..."));
   }
 
-  const find = async () => {
-    const anId = peerIdFromString(peers);
-    const res = await nodE.peerStore.get(anId).catch(() => alert("false"));
-    alert(Boolean(res));
-  };
-
   const publishTopic = async () => {
     handleSendMessage();
     let _topic = selectedTopic.current.value;
-    console.log("comm topic : ", _topic);
+    // console.log("comm topic : ", _topic);
     nodE.pubsub.publish(_topic, new TextEncoder().encode(inputValue));
     inputRef.current.value = "";
   };
@@ -247,35 +240,90 @@ export default function ChatCore() {
       .catch((err) => toast.error("err at ping : ", err));
   };
 
+   const addTopic = () => {
+     let temp = topicRef.current.value;
+
+     nodE.pubsub.unsubscribe(topic[topic.length - 1]); // unsubscribing from the before room...
+     setTopic([...topic, temp]);
+     setActiveTopic(temp);
+     setMessages([]);
+
+     nodE.pubsub.subscribe(temp); // subscribing to the new room...
+     toast(`🏠 Room ${temp} Created`);
+     topicRef.current.value = "";
+   };
+
+
   const changeRoom = (item) => {
-    setActiveTopic(item);    
+
+    setActiveTopic(item);
     toast(`🏠 Room changed to ${item}`);
-    nodE.pubsub.subscribe(item);
 
-    roomData.map((val) => {
-      if (val.room === item) {
-        setMessages(val.data);
-      }
-    });
-  };
 
-  const addTopic = () => {
-    let temp = topicRef.current.value;
-    nodE.pubsub.unsubscribe(topic[topic.length - 1]);
-    setTopic([...topic, temp]);
-    setActiveTopic(temp);
-    setMessages([]);
-    nodE.pubsub.subscribe(temp);
-    toast(`🏠 Room ${temp} Created`);
-    topicRef.current.value = " ";
+    nodE.pubsub.subscribe(item); // subscribing to the new room...
+
+    // handling data case when user choose to go back to a used room...
+
+    // roomData.map((val) => {
+    //   if (val.room === item) {
+    //     setMessages(val.data);
+    //   }
+    // });
 
   };
 
-  const handleCopy = ()=>{
-     Copy(peerId);
-     toast.success(`📋 Copied To Clipboard`);
+  const saveChat = async()=>{
+
+    const chatStr = localStorage.getItem(account+'room');
+    if (chatStr && account) {
+      
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(chatStr);
+
+      // add the bytes to your node and receive a unique content identifier
+
+      const _cid = await fs.addBytes(bytes);
+      const cid = _cid.toString();
+      console.log("cid is : "+cid);
+      localStorage.setItem(account + "data", cid);
+      
+    } else {
+      toast.error(`connect ur 👛 & 🫵 Data is empty.`);
+    }
   }
 
+ const getChat = async()=>{
+
+  const cid = localStorage.getItem(account+'data');
+
+  if(nodE && cid){
+
+    const decoder = new TextDecoder();
+    let text = "";
+ const b = await fs.cat(
+   "bafkreih5bdsgt6g6ohr7ma6ifbfar6fytbbjyvnyb5hlbytlnen5vtnhyy"
+ );    
+ console.log(b); 
+     for await (let chunk of fs.cat(cid)) {
+       text += decoder.decode(chunk, {
+         stream: true,
+       });
+     }
+ 
+    console.log(text)
+
+    const chatObj = JSON.parse(text);
+    console.log(chatObj);
+    
+    // chatObj.map((val) => {
+    //   if (val.room === activeTopic) {
+    //     setMessages(val.data);
+    //   }
+    // });
+
+  }else toast.error(`nothing to show...`)
+
+ }
 
   const handleShare = async()=>{
        try {
@@ -285,59 +333,48 @@ export default function ChatCore() {
   }
   
   }
-
-  const saveChat = async()=>{
-
-  const cid = await helios.addJSON(roomData);
-    console.info("your cid : ",cid.toString());
-    localStorage.setItem(`${account}cid`,cid);
-
-
-  }
-
-  async function getObject() {
-    const ipfs = await IPFS.create();
-    const chunks = [];
-    const cid = localStorage.getItem(`${account}cid`);
-    for await (const chunk of ipfs.cat(cid)) {
-      chunks.push(chunk);
-    }
-    const jsonStr = Buffer.concat(chunks).toString();
-    console.info("ipfs data : ",jsonStr);
-  }
-
-   useEffect(() => {        // To print data paired with address
-     if (localStorage.getItem(account)) {
-       setMessages(JSON.parse(localStorage.getItem(account)));
-     }
-   }, [account]);
-
+  
   useEffect(() =>{           // TO handle nearby share functionality
         if(peerId)  setShareData({
           title: "peerId_",
           url: `${peerId}`,
         });     
-  }, [topic,peerId]);
+      }, [topic,peerId]);
 
-  useEffect(() => {
-    if (recValue) {
-      handleReceiveMessage();
-    }
-  }, [recValue]);
 
+      // useEffect(() => {        // To print data paired with address
+      //   if (localStorage.getItem(account)) {
+      //     setMessages(JSON.parse(localStorage.getItem(account)));
+      //   }
+      // }, [account]);
+     
+      
+      //useEffect to add the received message in message variables
+      useEffect(() => {
+        if (recValue) {
+          handleReceiveMessage();
+        }
+      }, [recValue]);
+
+
+  
+      // this use effect is used to store data in room,data format. it will keep adding the new data coming in room
  
-  useEffect(()=>{
+  useEffect(()=>{   
+    
       localStorage.setItem(account, JSON.stringify(messages));
-
+      //  console.log("🚀: "+localStorage.getItem(account + "room"));
       if (localStorage.getItem(account + "room")) {
              let flag = true;
         JSON.parse(localStorage.getItem(account + "room")).map((val, i) => {
 
-          if (val.room === activeTopic && val.room !== null) {
+          if (val.room === activeTopic) {
             flag = false;
 
-              setRoomData((prevState)=>{
+          setRoomData((prevState)=>{
                 const temp = [...prevState];
+                if (!temp) return;    
+                console.log(`temp is : ${temp}`)
                 temp[i].data = messages;
                 return temp;
               })
@@ -360,12 +397,14 @@ export default function ChatCore() {
   },[messages])
 
 
+  // This useEffect will initally store the room data in localStorage.
  useEffect(()=>{
   if(account){
     localStorage.setItem(account + "room", JSON.stringify(roomData));
-  }
-   
+  } 
  },[roomData])
+
+
 
 
   return (
@@ -419,7 +458,7 @@ export default function ChatCore() {
           <h1>
             Your ID
             <Alert
-              onClick={() => (peerId ? handleCopy() : alert("start node"))}
+              onClick={() => (peerId ? handleCopy(peerId) : alert("start node"))}
               style={{ fontSize: 21, cursor: "pointer", overflow: "hidden" }}
               key="secondary"
               variant="secondary"
@@ -567,7 +606,7 @@ export default function ChatCore() {
           <button
             className="btn btn-dark"
             style={{ width: "49.5%", height: 50 }}
-            onClick={() => getObject()}
+            onClick={() => getChat()}
           >
             🍀 Get Your Chat From IPFS 🍀
           </button>

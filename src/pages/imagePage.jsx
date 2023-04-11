@@ -1,17 +1,13 @@
-import React,{useEffect,useState} from 'react'
+import React, { useEffect, useState } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
-import "../styles/imagesPage.module.css"
-import ImageSetLoader from '@/components/imageSetLoader'
+import "../styles/imagesPage.module.css";
+import ImageSetLoader from "@/components/imageSetLoader";
 
+function ImagePage({ data }) {
+  console.log("server data : ", data);
 
-
-function ImagePage({data}) {
-
-   console.log("server data : ",data)
-
-  const [category,setCategory] = useState("cats");
-
+  const [category, setCategory] = useState("cats");
 
   return (
     <div style={{ height: "600vh" }}>
@@ -73,4 +69,4 @@ function ImagePage({data}) {
 //   };
 // }
 
-export default ImagePage
+export default ImagePage;

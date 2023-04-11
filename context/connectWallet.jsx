@@ -1,6 +1,7 @@
 import React, { useState,useContext } from "react";
 import { ethers } from "ethers";
 import { ToastContainer, toast } from "react-toastify";
+import Copy from "copy-to-clipboard";
 
 
 export const connectWalletContext = React.createContext();
@@ -28,6 +29,8 @@ export default  function walletContextProvider({children}) {
         }else toast(account)
 
     }
+
+  // chatCore functionalities...
 
     const getDateData = () => {
       const date = new Date();
@@ -61,9 +64,17 @@ export default  function walletContextProvider({children}) {
       return pattern.test(str);
     }
 
+    
+
+  const handleCopy = (peerId) => {
+    Copy(peerId);
+    toast.success(`📋 Copied To Clipboard`);
+  };
+
+
   return (
     <connectWalletContext.Provider
-      value={{ wallet, account, getTimeData, getDateData, topStyle, isURL }}
+      value={{ wallet, account, getTimeData, getDateData, topStyle, isURL, handleCopy }}
     >
       {children}
     </connectWalletContext.Provider>
