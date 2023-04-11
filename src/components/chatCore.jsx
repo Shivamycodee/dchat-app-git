@@ -105,6 +105,7 @@ export default function ChatCore() {
 
   const start = async () => {
     try {
+      alert(`let's go bitch.. 🚀`)
       const node = await createLibp2p({
         addresses: {
           listen: [
@@ -129,6 +130,12 @@ export default function ChatCore() {
         ],
         dht: kadDHT(),
         pubsub: floodsub(),
+        nat: {
+          enabled:true
+        },
+        relay:{
+          enabled:true
+        }
       });
 
       await node.start();
