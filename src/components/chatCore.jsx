@@ -380,7 +380,7 @@ export default function ChatCore() {
 
           setRoomData((prevState)=>{
                 const temp = [...prevState];
-                if (!temp) return;    
+                if (temp === null) exit;    
                 console.log(`temp is : ${temp}`)
                 temp[i].data = messages;
                 return temp;
